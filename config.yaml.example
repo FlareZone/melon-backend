@@ -1,0 +1,8 @@
+app_name: melon
+log_level: INFO
+database:
+  melon:
+    dsn: ${your mysql username}:${your mysql password}@tcp(${your mysql host}:${your mysql host port})/${your mysql database}?parseTime=true
+jwt:
+  secret: ${your jwt secret}
+  issuer: melon
