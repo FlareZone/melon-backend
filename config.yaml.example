@@ -6,3 +6,8 @@ database:
 jwt:
   secret: ${your jwt secret}
   issuer: melon
+oauth_v2:
+  google:
+    client_id:
+    client_secret:
+    redirect_url:
