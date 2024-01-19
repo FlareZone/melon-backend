@@ -4,7 +4,7 @@ import "time"
 
 type Post struct {
 	ID        uint64     `xorm:"pk autoincr 'id'" json:"id"`
-	UUID      string     `xorm:"char(36) unique notnull 'uuid'" json:"uuid"`
+	UUID      string     `xorm:"char(32) unique notnull 'uuid'" json:"uuid"`
 	Title     string     `xorm:"varchar(128) 'title'" json:"title"`
 	Content   string     `xorm:"MEDIUMTEXT nullable 'content'" json:"content"`
 	Likes     uint64     `xorm:"likes" json:"likes"`

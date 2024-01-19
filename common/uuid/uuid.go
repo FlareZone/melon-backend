@@ -1,7 +1,10 @@
 package uuid
 
-import "github.com/google/uuid"
+import (
+	"github.com/google/uuid"
+	"strings"
+)
 
 func Uuid() string {
-	return uuid.New().String()
+	return strings.ReplaceAll(uuid.New().String(), "-", "")
 }

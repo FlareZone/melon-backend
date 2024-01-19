@@ -6,14 +6,23 @@ import (
 	"golang.org/x/oauth2/google"
 )
 
-var GoogleConf *oauth2.Config
+var (
+	JwtCfg         *jwtConfig
+	GoogleOauthCfg *oauth2.Config
+	MelonDBDsn     melonDBDsn
+)
 
-func InitGoogleConfig() {
-	GoogleConf = &oauth2.Config{
+func InitConfig() {
+	GoogleOauthCfg = &oauth2.Config{
 		ClientID:     viper.GetString("oauth_v2.google.client_id"),
 		ClientSecret: viper.GetString("oauth_v2.google.client_secret"),
 		RedirectURL:  viper.GetString("oauth_v2.google.redirect_url"),
 		Scopes:       []string{"email", "profile"},
 		Endpoint:     google.Endpoint,
 	}
+	JwtCfg = &jwtConfig{
+		Secret: viper.GetString("jwt.secret"),
+		Issuer: viper.GetString("jwt.issuer"),
+	}
+	MelonDBDsn = melonDBDsn(viper.GetString("database.melon.dsn"))
 }
