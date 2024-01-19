@@ -22,7 +22,7 @@ func Generate(userID string) (string, error) {
 	claims := CustomClaims{
 		UserID: userID,
 		StandardClaims: jwt.StandardClaims{
-			ExpiresAt: time.Now().Add(time.Hour * 6).Unix(),
+			ExpiresAt: time.Now().Add(time.Hour * 24).Unix(),
 			Issuer:    config.JwtCfg.Issuer,
 		},
 	}

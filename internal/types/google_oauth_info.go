@@ -19,11 +19,11 @@ type GoogleOAuthInfo struct {
 func (g GoogleOAuthInfo) User() *model.User {
 	return &model.User{
 		UUID:        uuid.Uuid(),
-		NickName:    g.Name,
-		Email:       g.Email,
-		EmailVerify: g.EmailVerified,
-		Avatar:      g.Picture,
-		CreatedAt:   time.Now(),
-		UpdatedAt:   time.Now(),
+		NickName:    &g.Name,
+		Email:       &g.Email,
+		EmailVerify: &g.EmailVerified,
+		Avatar:      &g.Picture,
+		CreatedAt:   time.Now().UTC(),
+		UpdatedAt:   time.Now().UTC(),
 	}
 }

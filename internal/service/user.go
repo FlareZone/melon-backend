@@ -12,6 +12,7 @@ var (
 
 type UserService interface {
 	FindUserByEmail(email string) (user *model.User)
+	FindUserByEthAddress(ethAddress string) (user *model.User)
 	FindUserByUuid(uuid string) (user *model.User)
 	Register(user model.User) bool
 }
@@ -29,6 +30,15 @@ func (u *User) FindUserByEmail(email string) (user *model.User) {
 	_, err := u.xorm.Table(&model.User{}).Where("email = ? and email_verify = ?", email, true).Get(user)
 	if err != nil {
 		log.Error("User.FindUserByEmail fail", "email", email, "err", err)
+	}
+	return
+}
+
+func (u *User) FindUserByEthAddress(ethAddress string) (user *model.User) {
+	user = new(model.User)
+	_, err := u.xorm.Table(&model.User{}).Where("eth_address = ?", ethAddress).Get(user)
+	if err != nil {
+		log.Error("User.FindUserByEthAddress fail", "eth_address", ethAddress, "err", err)
 	}
 	return
 }
