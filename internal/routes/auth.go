@@ -15,10 +15,10 @@ var (
 	log = log15.New("m", "routes")
 )
 
-func oauth(r *gin.Engine) {
+func auth(r *gin.Engine) {
 	authGroup := r.Group("/auth")
 	{
-		authHandler := handler.NewAuthHandler(service.NewUser(components.DBEngine))
+		authHandler := handler.NewAuthHandler(service.NewUser(components.DBEngine), service.NewNonce(components.DBEngine))
 		// google 登录
 		authGroup.GET("/google/login", func(c *gin.Context) {
 			c.Redirect(http.StatusTemporaryRedirect,
@@ -27,5 +27,10 @@ func oauth(r *gin.Engine) {
 
 		// google 登录回调
 		authGroup.GET("/google/callback", authHandler.GoogleOauthCallback)
+
+		// eth eip712 登录
+		authGroup.POST("/ethereum/signature/nonce", authHandler.EthereumEip712SignatureNonce)
+		authGroup.POST("/ethereum/signature/login", authHandler.EthereumEip712Signature)
+
 	}
 }

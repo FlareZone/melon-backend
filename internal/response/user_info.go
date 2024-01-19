@@ -1,6 +1,9 @@
 package response
 
-import "github.com/FlareZone/melon-backend/internal/model"
+import (
+	"github.com/FlareZone/melon-backend/internal/model"
+	"time"
+)
 
 type BaseUserInfo struct {
 	Uuid     string `json:"uuid"`
@@ -20,12 +23,12 @@ func WUserInfo(user model.User) UserInfo {
 	return UserInfo{
 		BaseUserInfo: BaseUserInfo{
 			Uuid:     user.UUID,
-			NickName: user.NickName,
-			Avatar:   user.Avatar,
+			NickName: user.GetNickname(),
+			Avatar:   user.GetAvatar(),
 		},
-		Email:      user.Email,
-		EthAddress: user.EthAddress,
-		CreatedAt:  user.CreatedAt.String(),
-		UpdatedAt:  user.UpdatedAt.String(),
+		Email:      user.GetEmail(),
+		EthAddress: user.GetEthAddress(),
+		CreatedAt:  user.CreatedAt.Format(time.RFC3339),
+		UpdatedAt:  user.UpdatedAt.Format(time.RFC3339),
 	}
 }
