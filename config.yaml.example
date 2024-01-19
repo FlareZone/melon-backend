@@ -8,6 +8,6 @@ jwt:
   issuer: melon
 oauth_v2:
   google:
-    client_id:
-    client_secret:
-    redirect_url:
+    client_id: ${google oauth client id}
+    client_secret: ${google oauth client secret}
+    redirect_url: ${google oauth redirect}

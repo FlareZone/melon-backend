@@ -2,8 +2,8 @@ package jwt
 
 import (
 	"fmt"
+	"github.com/FlareZone/melon-backend/config"
 	"github.com/golang-jwt/jwt"
-	"github.com/spf13/viper"
 	"time"
 )
 
@@ -23,12 +23,11 @@ func Generate(userID string) (string, error) {
 		UserID: userID,
 		StandardClaims: jwt.StandardClaims{
 			ExpiresAt: time.Now().Add(time.Hour * 6).Unix(),
-			Issuer:    viper.GetString("jwt.issuer"),
+			Issuer:    config.JwtCfg.Issuer,
 		},
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	fmt.Println(viper.GetString("jwt.secret"))
-	jwtToken, err := token.SignedString([]byte(viper.GetString("jwt.secret")))
+	jwtToken, err := token.SignedString([]byte(config.JwtCfg.Secret))
 	if err != nil {
 		return "", err
 	}
@@ -40,7 +39,7 @@ func Parse(jwtToken string) (string, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 		}
-		return []byte(viper.GetString("jwt.secret")), nil
+		return []byte(config.JwtCfg.Secret), nil
 	})
 	if err != nil {
 		return "", err
