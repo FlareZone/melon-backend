@@ -1,27 +1,35 @@
-package response
+package handler
 
 import (
 	"github.com/FlareZone/melon-backend/internal/model"
 	"time"
 )
 
-type BaseUserInfo struct {
+type BaseUserInfoResponse struct {
 	Uuid     string `json:"uuid"`
 	NickName string `json:"nick_name"`
 	Avatar   string `json:"avatar"`
 }
 
-type UserInfo struct {
-	BaseUserInfo
+func (b *BaseUserInfoResponse) WithUser(user *model.User) *BaseUserInfoResponse {
+	return &BaseUserInfoResponse{
+		Uuid:     user.UUID,
+		NickName: user.GetNickname(),
+		Avatar:   user.GetAvatar(),
+	}
+}
+
+type UserInfoResponse struct {
+	BaseUserInfoResponse
 	Email      string `json:"email"`
 	EthAddress string `json:"eth_address"`
 	CreatedAt  string `json:"created_at"`
 	UpdatedAt  string `json:"updated_at"`
 }
 
-func WUserInfo(user model.User) UserInfo {
-	return UserInfo{
-		BaseUserInfo: BaseUserInfo{
+func (u *UserInfoResponse) WithUser(user *model.User) *UserInfoResponse {
+	return &UserInfoResponse{
+		BaseUserInfoResponse: BaseUserInfoResponse{
 			Uuid:     user.UUID,
 			NickName: user.GetNickname(),
 			Avatar:   user.GetAvatar(),

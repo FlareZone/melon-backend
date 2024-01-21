@@ -11,3 +11,8 @@ oauth_v2:
     client_id: ${google oauth client id}
     client_secret: ${google oauth client secret}
     redirect_url: ${google oauth redirect}
+eip712:
+  chain_id: 1
+  version: 1
+  name: melon
+  verifying_Contract: 0xdAC17F958D2ee523a2206206994597C13D831ec7

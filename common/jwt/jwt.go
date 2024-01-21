@@ -2,15 +2,10 @@ package jwt
 
 import (
 	"fmt"
+	"github.com/FlareZone/melon-backend/common/consts"
 	"github.com/FlareZone/melon-backend/config"
 	"github.com/golang-jwt/jwt"
 	"time"
-)
-
-const (
-	UserID        = "UserID"
-	Bearer        = "Bearer "
-	Authorization = "Authorization"
 )
 
 type CustomClaims struct {
@@ -45,7 +40,7 @@ func Parse(jwtToken string) (string, error) {
 		return "", err
 	}
 	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
-		return claims[UserID].(string), nil
+		return claims[consts.JwtUserID].(string), nil
 	} else {
 		return "", fmt.Errorf("parse jwt token fail")
 	}

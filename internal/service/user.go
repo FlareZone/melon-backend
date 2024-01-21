@@ -47,7 +47,7 @@ func (u *User) FindUserByUuid(uuid string) (user *model.User) {
 	user = new(model.User)
 	_, err := u.xorm.Table(&model.User{}).Where("uuid = ?", uuid).Get(user)
 	if err != nil {
-		log.Error("User.FindUserByEmail fail", "uuid", uuid, "err", err)
+		log.Error("User.FindUserByUuid fail", "uuid", uuid, "err", err)
 	}
 	return
 }
