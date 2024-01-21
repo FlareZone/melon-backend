@@ -8,6 +8,8 @@ type Comment struct {
 	PostID    string     `xorm:"post_id" json:"postId"`
 	ParentID  string     `xorm:"parent_id" json:"parentId"`
 	Content   string     `xorm:"text 'content'" json:"content"`
+	Likes     uint       `xorm:"likes" json:"likes"`
+	Comments  uint       `xorm:"comments" json:"comments"`
 	Creator   string     `xorm:"creator" json:"creator"`
 	CreatedAt time.Time  `xorm:"created_at" json:"created_at"`
 	UpdatedAt time.Time  `xorm:"updated_at" json:"updated_at"`

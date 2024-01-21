@@ -1,7 +1,7 @@
 package handler
 
 import (
-	"github.com/FlareZone/melon-backend/common/ginctx"
+	"github.com/FlareZone/melon-backend/internal/ginctx"
 	"github.com/FlareZone/melon-backend/internal/response"
 	"github.com/FlareZone/melon-backend/internal/service"
 	"github.com/gin-gonic/gin"
@@ -16,10 +16,6 @@ func NewUserHandler(user service.UserService) *UserHandler {
 }
 
 func (u *UserHandler) Info(c *gin.Context) {
-	user := u.user.FindUserByUuid(ginctx.GetUserID(c))
-	if user.UUID == "" {
-		response.JsonFail(c, response.UserNotFound, "User Not Found!")
-	}
-	response.JsonSuccess(c, response.WUserInfo(*user))
+	response.JsonSuccess(c, new(UserInfoResponse).WithUser(ginctx.AuthUser(c)))
 	return
 }

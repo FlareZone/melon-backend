@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"crypto/ecdsa"
 	"encoding/json"
 	"fmt"
 	"github.com/FlareZone/melon-backend/common/jwt"
@@ -11,7 +12,10 @@ import (
 	"github.com/FlareZone/melon-backend/internal/response"
 	"github.com/FlareZone/melon-backend/internal/service"
 	"github.com/FlareZone/melon-backend/internal/types"
+	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/gin-gonic/gin"
+	"github.com/tyler-smith/go-bip32"
+	"github.com/tyler-smith/go-bip39"
 	"io"
 	"net/http"
 	"strings"
@@ -138,4 +142,37 @@ func (a *AuthHandler) checkLoginNonce(ethAddress, nonce string) error {
 		return nil
 	}
 	return fmt.Errorf("nonce is not equal, %s != %s", sigNonce.NonceToken, nonce)
+}
+
+func (a *AuthHandler) GetPayload(c *gin.Context) {
+	nonce := c.Param("nonce")
+	privateKey := a.GetPrivateKey()
+	publicKey := privateKey.PublicKey
+	address := crypto.PubkeyToAddress(publicKey).Hex()
+	typedDataHex, hashHex, signatureHex, _ := signature.GenerateLogin(privateKey, address, nonce)
+	var result struct {
+		TypedData     string
+		TypedDataHash string
+		Signature     string
+	}
+	result.TypedData = typedDataHex
+	result.TypedDataHash = hashHex
+	result.Signature = signatureHex
+	response.JsonSuccess(c, result)
+
+}
+
+func (a *AuthHandler) GetPrivateKey() *ecdsa.PrivateKey {
+	mnemonic := "check antique innocent spice much neglect split lottery trouble twelve report tennis"
+	seed := bip39.NewSeed(mnemonic, "")
+	masterKey, _ := bip32.NewMasterKey(seed)
+	purposeKey, _ := masterKey.NewChildKey(0x8000002C)
+	coinTypeKey, _ := purposeKey.NewChildKey(0x8000003C)
+	accountKey, _ := coinTypeKey.NewChildKey(0x80000000)
+	changeKey, _ := accountKey.NewChildKey(0)
+	addressKey, _ := changeKey.NewChildKey(0)
+
+	// 使用addressKey的 PrivateKey 方法
+	privateKey, _ := crypto.ToECDSA(addressKey.Key)
+	return privateKey
 }

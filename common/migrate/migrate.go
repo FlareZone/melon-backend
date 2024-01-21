@@ -17,8 +17,10 @@ func Schema(dsn string) {
 		log.Error("sync database new xorm fail", "err", err)
 		panic(err)
 	}
-	err = engine.Sync(model.User{}, model.Post{}, model.Topic{}, model.PostTopic{}, model.Group{},
-		model.Comment{}, model.SigNonce{})
+	err = engine.Sync(
+		model.User{}, model.Post{},
+		model.Topic{}, model.PostTopic{}, model.Group{},
+		model.Comment{}, model.SigNonce{}, model.UserGroup{})
 	if err != nil {
 		log.Error("sync database migrate fail", "err", err)
 		panic(err)

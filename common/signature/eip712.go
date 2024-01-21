@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"github.com/FlareZone/melon-backend/common/hexutil"
 	"github.com/FlareZone/melon-backend/config"
 	"github.com/ethereum/go-ethereum/common/math"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -35,7 +36,7 @@ Nonce: %s
 `, config.EIP712.Name, config.App.Url, config.App.Url, ethAddress, nonce)
 }
 
-func GenerateLogin(PrivateECDSA *ecdsa.PrivateKey, ethAddress string, nonce string) (hashHex, signatureHex string, err error) {
+func GenerateLogin(PrivateECDSA *ecdsa.PrivateKey, ethAddress string, nonce string) (typedDataHex, hashHex, signatureHex string, err error) {
 	domain := apitypes.TypedDataDomain{
 		Name:              config.EIP712.Name,
 		Version:           config.EIP712.Version,
@@ -60,6 +61,10 @@ func GenerateLogin(PrivateECDSA *ecdsa.PrivateKey, ethAddress string, nonce stri
 			"message": LoginMessage(ethAddress, nonce),
 		},
 	}
+
+	marshal, _ := json.Marshal(typedData)
+	typedDataHex = hexutil.Hex(marshal).Hex()
+
 	hash, _, err := apitypes.TypedDataAndHash(typedData)
 	if err != nil {
 		return
