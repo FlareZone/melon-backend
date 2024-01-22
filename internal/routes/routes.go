@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"github.com/FlareZone/melon-backend/config"
 	"github.com/FlareZone/melon-backend/internal/middleware"
 	"github.com/FlareZone/melon-backend/internal/routes/auth"
 	"github.com/FlareZone/melon-backend/internal/routes/v1"
@@ -10,10 +11,10 @@ import (
 
 func Web(r *gin.Engine) {
 	r.LoadHTMLGlob("web/*")
-	r.Static("/web", "./web")
 	r.GET("/web", func(c *gin.Context) {
 		c.HTML(http.StatusOK, "index.html", gin.H{
 			"Name": "文件上传",
+			"Host": config.App.Url,
 		})
 	})
 }

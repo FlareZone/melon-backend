@@ -22,6 +22,9 @@ func Jwt() gin.HandlerFunc {
 		if strings.HasPrefix(jwtToken, consts.JwtBearer) {
 			jwtToken = strings.TrimPrefix(jwtToken, consts.JwtBearer)
 		}
+		if jwtToken == "" {
+			jwtToken, _ = c.Cookie(consts.JwtCookie)
+		}
 		userID, err := jwt.Parse(jwtToken)
 		// 解析token，如果有任何错误返回401 Unauthorized
 		if err != nil {
