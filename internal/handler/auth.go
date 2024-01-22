@@ -80,8 +80,8 @@ func (a *AuthHandler) GoogleOauthCallback(c *gin.Context) {
 	c.SetCookie(consts.JwtCookie, jwtToken, 24*3600, "/", config.App.Domain(), false, true)
 
 	result := map[string]interface{}{
-		"jwtToken":  jwtToken,
-		"expiredAt": time.Now().Add(time.Hour * 24).UnixMilli(),
+		"jwt_token":  jwtToken,
+		"expired_at": time.Now().Add(time.Hour * 24).UnixMilli(),
 	}
 	response.JsonSuccessWithMessage(c, result, "Login successful!")
 	return
@@ -119,8 +119,8 @@ func (a *AuthHandler) EthereumEip712Signature(c *gin.Context) {
 	}
 	c.SetCookie(consts.JwtCookie, jwtToken, 24*3600, "/", config.App.Domain(), false, true)
 	result := map[string]interface{}{
-		"jwtToken":  jwtToken,
-		"expiredAt": time.Now().Add(time.Hour * 24).UnixMilli(),
+		"jwt_token":  jwtToken,
+		"expired_at": time.Now().Add(time.Hour * 24).UnixMilli(),
 	}
 	response.JsonSuccessWithMessage(c, result, "Login successful!")
 	return
