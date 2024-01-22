@@ -22,3 +22,10 @@ type eip712 struct {
 	Name              string
 	VerifyingContract string
 }
+
+type aliyunOssConfig struct {
+	AccessKeyID     string
+	AccessKeySecret string
+	Endpoint        string
+	BucketName      string
+}

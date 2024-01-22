@@ -20,3 +20,7 @@ var (
 	PostFail    = 4000001
 	CommentFail = 4000002
 )
+
+var (
+	OssBadBucketConfig = 6000001
+)

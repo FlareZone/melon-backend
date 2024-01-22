@@ -6,6 +6,7 @@ import (
 	"github.com/gin-gonic/gin/binding"
 	"github.com/go-playground/validator/v10"
 	"regexp"
+	"slices"
 	"strings"
 )
 
@@ -25,6 +26,18 @@ func ValidatorRegister() {
 			userID := fl.Field().String()
 			user := service.NewUser(components.DBEngine).FindUserByUuid(userID)
 			return user.ID > 0
+		})
+
+		_ = v.RegisterValidation("ossStorage", func(fl validator.FieldLevel) bool {
+			storage := fl.Field().String()
+			storageEnums := []string{"users", "posts"}
+			return slices.Contains(storageEnums, storage)
+		})
+
+		_ = v.RegisterValidation("ossImageExt", func(fl validator.FieldLevel) bool {
+			imageExt := fl.Field().String()
+			imageEnums := []string{"jpeg", "png"}
+			return slices.Contains(imageEnums, imageExt)
 		})
 	}
 }
