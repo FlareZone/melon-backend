@@ -31,6 +31,10 @@ func (p *PostHandler) CreatePost(c *gin.Context) {
 	response.JsonSuccess(c, new(PostResponse).WithPost(post))
 }
 
+func (p *PostHandler) ListPosts(c *gin.Context) {
+
+}
+
 func (p *PostHandler) Comment(c *gin.Context) {
 	var params PostCreateCommentRequest
 	if err := c.BindJSON(&params); err != nil {

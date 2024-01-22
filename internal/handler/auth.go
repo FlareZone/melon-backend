@@ -19,7 +19,6 @@ import (
 	"github.com/tyler-smith/go-bip39"
 	"io"
 	"net/http"
-	"strings"
 	"time"
 )
 
@@ -79,7 +78,12 @@ func (a *AuthHandler) GoogleOauthCallback(c *gin.Context) {
 	}
 
 	c.SetCookie(consts.JwtCookie, jwtToken, 24*3600, "/", config.App.Domain(), false, true)
-	response.JsonSuccessWithMessage(c, jwtToken, "Login successful!")
+
+	result := map[string]interface{}{
+		"jwtToken":  jwtToken,
+		"expiredAt": time.Now().Add(time.Hour * 24).UnixMilli(),
+	}
+	response.JsonSuccessWithMessage(c, result, "Login successful!")
 	return
 }
 
@@ -89,7 +93,7 @@ func (a *AuthHandler) EthereumEip712Signature(c *gin.Context) {
 		response.JsonFail(c, response.BadRequestParams, err.Error())
 		return
 	}
-	ethAddress, err := signature.MelonLoginWithEip712(params.GetTypedData(), params.TypedDataHash, params.Signature, a.checkLoginNonce)
+	ethAddress, err := signature.MelonLoginWithEip712(params.GetTypedData(), params.TypedDataHash, params.Signature, a.getEthAddressNonceToken)
 	if err != nil {
 		response.JsonFail(c, response.BadRequestParams, err.Error())
 		return
@@ -114,7 +118,11 @@ func (a *AuthHandler) EthereumEip712Signature(c *gin.Context) {
 		return
 	}
 	c.SetCookie(consts.JwtCookie, jwtToken, 24*3600, "/", config.App.Domain(), false, true)
-	response.JsonSuccessWithMessage(c, jwtToken, "Login successful!")
+	result := map[string]interface{}{
+		"jwtToken":  jwtToken,
+		"expiredAt": time.Now().Add(time.Hour * 24).UnixMilli(),
+	}
+	response.JsonSuccessWithMessage(c, result, "Login successful!")
 	return
 }
 
@@ -139,13 +147,9 @@ func (a *AuthHandler) EthereumEip712SignatureNonce(c *gin.Context) {
 	return
 }
 
-func (a *AuthHandler) checkLoginNonce(ethAddress, nonce string) error {
+func (a *AuthHandler) getEthAddressNonceToken(ethAddress string) string {
 	sigNonce := a.sigNonce.FindSigNonceByEthAddress(ethAddress)
-	if strings.EqualFold(sigNonce.NonceToken, nonce) {
-		a.sigNonce.UseNonce(sigNonce)
-		return nil
-	}
-	return fmt.Errorf("nonce is not equal, %s != %s", sigNonce.NonceToken, nonce)
+	return sigNonce.NonceToken
 }
 
 func (a *AuthHandler) GetPayload(c *gin.Context) {

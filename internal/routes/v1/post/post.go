@@ -44,6 +44,8 @@ func Posts(postGroup *gin.RouterGroup) {
 	// 发表Post
 	postGroup.POST("", postHandler.CreatePost)
 
+	postGroup.GET("")
+
 	postDetailGroup := postGroup.Group("/:post_id")
 	postDetailGroup.Use(middleware.Post())
 	{
