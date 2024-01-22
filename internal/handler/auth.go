@@ -4,6 +4,7 @@ import (
 	"crypto/ecdsa"
 	"encoding/json"
 	"fmt"
+	"github.com/FlareZone/melon-backend/common/consts"
 	"github.com/FlareZone/melon-backend/common/jwt"
 	"github.com/FlareZone/melon-backend/common/signature"
 	"github.com/FlareZone/melon-backend/common/uuid"
@@ -76,6 +77,8 @@ func (a *AuthHandler) GoogleOauthCallback(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"message": "Failed to get userinfo", "error": err.Error()})
 		return
 	}
+
+	c.SetCookie(consts.JwtCookie, jwtToken, 24*3600, "/", config.App.Domain(), false, true)
 	response.JsonSuccessWithMessage(c, jwtToken, "Login successful!")
 	return
 }
@@ -110,6 +113,7 @@ func (a *AuthHandler) EthereumEip712Signature(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"message": "Failed to get userinfo", "error": err.Error()})
 		return
 	}
+	c.SetCookie(consts.JwtCookie, jwtToken, 24*3600, "/", config.App.Domain(), false, true)
 	response.JsonSuccessWithMessage(c, jwtToken, "Login successful!")
 	return
 }
