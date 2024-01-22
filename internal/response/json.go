@@ -10,7 +10,7 @@ func JsonSuccess(c *gin.Context, data interface{}) {
 }
 
 func JsonSuccessWithMessage(c *gin.Context, data interface{}, message string) {
-	c.JSON(http.StatusOK, gin.H{"ok": 0, "message": message, "data": data})
+	c.JSON(http.StatusOK, gin.H{"code": 0, "message": message, "data": data})
 }
 
 func JsonFail(c *gin.Context, code int, message string) {
@@ -18,6 +18,6 @@ func JsonFail(c *gin.Context, code int, message string) {
 }
 
 func JsonFailWithMessage(c *gin.Context, code int, data interface{}, message string) {
-	c.JSON(http.StatusOK, gin.H{"ok": code, "message": message, "data": data})
+	c.JSON(http.StatusOK, gin.H{"code": code, "message": message, "data": data})
 
 }

@@ -21,19 +21,7 @@ var (
 )
 
 var LoginMessage = func(ethAddress string, nonce string) string {
-	return fmt.Sprintf(`
-Welcome to %s!
-
-Click to sign in and accept the Melon Terms of Service (%s) and Privacy Policy (%s/privacy).
-
-This request will not trigger a blockchain transaction or cost any gas fees.
-
-Your authentication status will reset after 24 hours.  
-
-Wallet address: %s
-
-Nonce: %s
-`, config.EIP712.Name, config.App.Url, config.App.Url, ethAddress, nonce)
+	return fmt.Sprintf(`address:[%s] Nonce:[%s]`, ethAddress, nonce)
 }
 
 func GenerateLogin(PrivateECDSA *ecdsa.PrivateKey, ethAddress string, nonce string) (typedDataHex, hashHex, signatureHex string, err error) {
@@ -80,7 +68,7 @@ func GenerateLogin(PrivateECDSA *ecdsa.PrivateKey, ethAddress string, nonce stri
 	return
 }
 
-func MelonLoginWithEip712(typedDataStr, hashHex, signatureHex string, f func(ethAddress, nonce string) error) (ethAddress string, err error) {
+func MelonLoginWithEip712(typedDataStr, hashHex, signatureHex string, f func(ethAddress string) string) (ethAddress string, err error) {
 	var typedData apitypes.TypedData
 	err = json.Unmarshal([]byte(typedDataStr), &typedData)
 	if err != nil {
@@ -95,12 +83,6 @@ func MelonLoginWithEip712(typedDataStr, hashHex, signatureHex string, f func(eth
 	message, ok := messageInfo.(string)
 	if !ok {
 		err = fmt.Errorf("MelonLogin, unkonwn typedData.Message.message type")
-		return
-	}
-	nonceMatches := nonceRegex.FindStringSubmatch(message)
-	walletAddressMatches := walletAddressRegex.FindStringSubmatch(message)
-	if len(nonceMatches) <= 1 || len(walletAddressMatches) <= 1 {
-		err = fmt.Errorf("MelonLogin, unkonwn typedData ")
 		return
 	}
 	hash, _, err := apitypes.TypedDataAndHash(typedData)
@@ -132,20 +114,34 @@ func MelonLoginWithEip712(typedDataStr, hashHex, signatureHex string, f func(eth
 		err = fmt.Errorf("MelonLogin, invalid typedData.Domain.VerifyingContract, %s != %s", typedData.Domain.VerifyingContract, config.EIP712.VerifyingContract)
 		return
 	}
-	nonce := nonceMatches[1]
-	wallet := walletAddressMatches[1]
+	//nonce := nonceMatches[1]
+	//wallet := walletAddressMatches[1]
 	recoveredAddr := crypto.PubkeyToAddress(*pub)
 	ethAddress = recoveredAddr.Hex()
-	if !strings.EqualFold(wallet, ethAddress) {
-		err = fmt.Errorf("MelonLogin, invalid wallet address, %s != %s", wallet, ethAddress)
+
+	if !strings.Contains(strings.ToLower(message), strings.ToLower(ethAddress)) {
+		err = fmt.Errorf("MelonLogin, invalid wallet address, %s != %s", ethAddress, ethAddress)
 		ethAddress = ""
 		return
 	}
-	if nonce != testNonce {
-		if err = f(ethAddress, nonce); err != nil {
-			err = fmt.Errorf("MelonLogin, invalid nonce, err is %v", err)
-			return
-		}
+
+	nonce := strings.ToLower(f(ethAddress))
+	if !strings.Contains(strings.ToLower(message), nonce) {
+		err = fmt.Errorf("MelonLogin, invalid wallet address, %s != %s", ethAddress, ethAddress)
+		ethAddress = ""
+		return
 	}
+
+	//if !strings.EqualFold(wallet, ethAddress) {
+	//	err = fmt.Errorf("MelonLogin, invalid wallet address, %s != %s", wallet, ethAddress)
+	//	ethAddress = ""
+	//	return
+	//}
+	//if nonce != testNonce {
+	//	if err = f(ethAddress, nonce); err != nil {
+	//		err = fmt.Errorf("MelonLogin, invalid nonce, err is %v", err)
+	//		return
+	//	}
+	//}
 	return
 }
