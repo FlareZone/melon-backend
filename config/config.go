@@ -12,6 +12,7 @@ var (
 	MelonDBDsn     melonDBDsn
 	App            *app
 	EIP712         *eip712
+	AliyunOSS      *aliyunOssConfig
 )
 
 func InitConfig() {
@@ -37,5 +38,10 @@ func InitConfig() {
 		Version:           viper.GetString("eip712.version"),
 		Name:              viper.GetString("eip712.name"),
 	}
-
+	AliyunOSS = &aliyunOssConfig{
+		Endpoint:        viper.GetString("oss.aliyun.endpoint"),
+		AccessKeyID:     viper.GetString("oss.aliyun.accessKeyId"),
+		AccessKeySecret: viper.GetString("oss.aliyun.accessKeySecret"),
+		BucketName:      viper.GetString("oss.aliyun.bucketName"),
+	}
 }
