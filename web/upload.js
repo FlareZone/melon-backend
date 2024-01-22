@@ -1,7 +1,7 @@
 document.getElementById('uploadButton').addEventListener('click', async () => {
     const fileInput = document.getElementById('fileInput');
     const statusText = document.getElementById('statusText');
-
+    const jwt = document.getElementById('jwt');
     if (fileInput.files.length === 0) {
         statusText.innerText = '请选择一个文件上传';
         return;
@@ -19,7 +19,7 @@ document.getElementById('uploadButton').addEventListener('click', async () => {
             method: "POST",
             headers: {
               'Content-Type': 'application/json',
-              'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3MDU5ODA4OTQsImlzcyI6Im1lbG9uIiwiVXNlcklEIjoiZTBmMWNiODZjN2U2NDQ2Y2E5MjFhMGUwYTA4YzcxOGIifQ.rbTkxYvcEI3Mgx2_1I4-zGs4GmLoYKl5z420zT1IZ1M`
+              'Authorization': `Bearer ${jwt.value}`
             },
             body: JSON.stringify({
               "storage": "users",
