@@ -15,7 +15,7 @@ document.getElementById('uploadButton').addEventListener('click', async () => {
 
     try {
         // 请求服务端获取预签名的URL
-        const response = await fetch('http://localhost:8080/api/v1/assets/aliyun/oss/policy', {
+        const response = await fetch('https://melon-dev.taozhang.net.cn/api/v1/assets/aliyun/oss/policy', {
             method: "POST",
             headers: {
               'Content-Type': 'application/json',
