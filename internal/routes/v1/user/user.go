@@ -10,4 +10,6 @@ import (
 func User(r *gin.RouterGroup) {
 	userHandler := handler.NewUserHandler(service.NewUser(components.DBEngine))
 	r.GET("/info", userHandler.Info)
+	r.GET("/following/:uuid", userHandler.Following)
+	r.GET("/followers/:uuid", userHandler.Followers)
 }

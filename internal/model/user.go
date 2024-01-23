@@ -48,3 +48,28 @@ func (u User) GetEmail() string {
 	}
 	return *u.Email
 }
+
+type UserGroup struct {
+	ID        uint64     `xorm:"pk autoincr 'id'" json:"id"`
+	UserID    string     `xorm:"char(32) index(user_id,group_id,deleted_at) notnull 'user_id'" json:"user_id"`
+	GroupID   string     `xorm:"char(32) index(group_id,user_id,deleted_at) notnull 'group_id'" json:"group_id"`
+	CreatedAt time.Time  `xorm:"created_at" json:"created_at"`
+	UpdatedAt time.Time  `xorm:"updated_at" json:"updated_at"`
+	DeletedAt *time.Time `xorm:"'deleted_at'" json:"deleted_at"`
+}
+
+func (u UserGroup) TableName() string {
+	return "user_groups"
+}
+
+type UserFollow struct {
+	ID         uint64    `xorm:"pk autoincr 'id'" json:"id"`
+	UserID     string    `xorm:"char(32) index(user_id,follower_id,created_at) notnull 'user_id'" json:"user_id"`
+	FollowerID string    `xorm:"char(32) index(follower_id,user_id,created_at)  notnull 'follower_id'" json:"follower_id"`
+	CreatedAt  time.Time `xorm:"created_at" json:"created_at"`
+	UpdatedAt  time.Time `xorm:"updated_at" json:"updated_at"`
+}
+
+func (u UserFollow) TableName() string {
+	return "user_follows"
+}

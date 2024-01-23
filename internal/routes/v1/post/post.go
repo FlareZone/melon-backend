@@ -21,10 +21,14 @@ func Comments(postDetailCommentGroup *gin.RouterGroup) {
 func Detail(postDetailGroup *gin.RouterGroup) {
 	postHandler := handler.NewPostHandler(service.NewPost(components.DBEngine))
 	// 更新Post
-	postDetailGroup.POST("", func(context *gin.Context) {})
+	postDetailGroup.POST("", postHandler.Edit)
 
 	// 获取Post Detail
-	postDetailGroup.GET("", func(context *gin.Context) {})
+	postDetailGroup.GET("", postHandler.Detail)
+
+	postDetailGroup.PUT("/like", postHandler.Like)
+	postDetailGroup.PUT("/view", postHandler.View)
+	postDetailGroup.PUT("/share", postHandler.Share)
 
 	// 发表评论
 	postDetailGroup.POST("/comments", postHandler.Comment)
@@ -43,9 +47,6 @@ func Posts(postGroup *gin.RouterGroup) {
 	postHandler := handler.NewPostHandler(service.NewPost(components.DBEngine))
 	// 发表Post
 	postGroup.POST("", postHandler.CreatePost)
-
-	postGroup.GET("")
-
 	postDetailGroup := postGroup.Group("/:post_id")
 	postDetailGroup.Use(middleware.Post())
 	{

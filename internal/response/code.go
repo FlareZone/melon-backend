@@ -1,6 +1,10 @@
 package response
 
 var (
+	StatusUnauthorized = 401
+)
+
+var (
 	UserNotFound = 1000001
 )
 
@@ -17,8 +21,8 @@ var (
 )
 
 var (
-	PostFail    = 4000001
-	CommentFail = 4000002
+	PostFailed    = 4000001
+	CommentFailed = 4000002
 )
 
 var (
