@@ -12,11 +12,22 @@ type BaseUserInfoResponse struct {
 }
 
 func (b *BaseUserInfoResponse) WithUser(user *model.User) *BaseUserInfoResponse {
+	if user == nil {
+		return &BaseUserInfoResponse{}
+	}
 	return &BaseUserInfoResponse{
 		Uuid:     user.UUID,
 		NickName: user.GetNickname(),
 		Avatar:   user.GetAvatar(),
 	}
+}
+
+func (b *BaseUserInfoResponse) WithUsers(users []*model.User) []*BaseUserInfoResponse {
+	bases := make([]*BaseUserInfoResponse, 0)
+	for _, user := range users {
+		bases = append(bases, b.WithUser(user))
+	}
+	return bases
 }
 
 type UserInfoResponse struct {

@@ -4,9 +4,9 @@ import (
 	"github.com/FlareZone/melon-backend/common/consts"
 	"github.com/FlareZone/melon-backend/internal/components"
 	"github.com/FlareZone/melon-backend/internal/ginctx"
+	"github.com/FlareZone/melon-backend/internal/response"
 	"github.com/FlareZone/melon-backend/internal/service"
 	"github.com/gin-gonic/gin"
-	"net/http"
 )
 
 func Group() gin.HandlerFunc {
@@ -19,12 +19,12 @@ func Group() gin.HandlerFunc {
 		group := service.NewGroup(components.DBEngine).FindByGroupID(groupID)
 		// 用户访问不存在的group，显示无权限
 		if group.ID == 0 {
-			c.AbortWithStatus(http.StatusUnauthorized)
+			response.JsonFail(c, response.StatusUnauthorized, "Unauthorized")
 			return
 		}
-		// 用户不在group组中，则无权限
-		if !service.NewGroup(components.DBEngine).HasUser(group, ginctx.AuthUserID(c)) {
-			c.AbortWithStatus(http.StatusUnauthorized)
+		// 群组是加密的，且用户不在group组中，则提示无权限
+		if group.IsPrivate && !service.NewGroup(components.DBEngine).HasUser(group, ginctx.AuthUserID(c)) {
+			response.JsonFail(c, response.StatusUnauthorized, "Unauthorized")
 			return
 		}
 		c.Set(consts.AuthGroup, group)

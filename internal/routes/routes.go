@@ -2,9 +2,12 @@ package routes
 
 import (
 	"github.com/FlareZone/melon-backend/config"
+	"github.com/FlareZone/melon-backend/internal/components"
+	"github.com/FlareZone/melon-backend/internal/handler"
 	"github.com/FlareZone/melon-backend/internal/middleware"
 	"github.com/FlareZone/melon-backend/internal/routes/auth"
 	"github.com/FlareZone/melon-backend/internal/routes/v1"
+	"github.com/FlareZone/melon-backend/internal/service"
 	"github.com/gin-gonic/gin"
 	"net/http"
 )
@@ -17,6 +20,12 @@ func Web(r *gin.Engine) {
 			"Host": config.App.Url,
 		})
 	})
+}
+
+func NoLoginJwt(r *gin.Engine) {
+	postHandler := handler.NewPostHandler(service.NewPost(components.DBEngine))
+	r.GET("/api/v1/posts", postHandler.ListPosts)
+
 }
 
 func Route(r *gin.Engine) {

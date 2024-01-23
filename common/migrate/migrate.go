@@ -18,9 +18,11 @@ func Schema(dsn string) {
 		panic(err)
 	}
 	err = engine.Sync(
-		model.User{}, model.Post{}, model.Asset{},
-		model.Topic{}, model.PostTopic{}, model.Group{},
-		model.Comment{}, model.SigNonce{}, model.UserGroup{})
+		model.User{}, model.UserFollow{},
+		model.Post{}, model.Topic{}, model.PostTopic{}, model.Comment{},
+		model.Group{}, model.UserGroup{},
+		model.Asset{},
+		model.SigNonce{})
 	if err != nil {
 		log.Error("sync database migrate fail", "err", err)
 		panic(err)
