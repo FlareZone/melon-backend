@@ -11,9 +11,10 @@ import (
 type GroupService interface {
 	FindByGroupID(groupID string) (group *model.Group)
 	HasUser(group *model.Group, userID string) bool
-	Create(name, description, userID string) (group *model.Group)
+	Create(name, description, userID, logo, bgLogo string, isPrivate bool) (group *model.Group)
 	QueryGroupByName(name string) (group *model.Group)
 	AddUser(group *model.Group, userID string) bool
+	QueryUserGroups(user *model.User) (groups []*model.Group)
 }
 
 type Group struct {
@@ -22,6 +23,16 @@ type Group struct {
 
 func NewGroup(xorm *xorm.Engine) GroupService {
 	return &Group{xorm: xorm}
+}
+
+func (g *Group) QueryUserGroups(user *model.User) (groups []*model.Group) {
+	groups = make([]*model.Group, 0)
+	err := g.xorm.Table(&model.Group{}).Join("INNER", "user_groups", "groups.uuid = user_groups.group_id").
+		Select("groups.*").Where("user_groups.user_id = ?", user.UUID).Find(&groups)
+	if err != nil {
+		return
+	}
+	return
 }
 
 func (g *Group) QueryGroupByName(name string) (group *model.Group) {
@@ -58,12 +69,15 @@ func (g *Group) HasUser(group *model.Group, userID string) bool {
 	return userGroup.ID > 0
 }
 
-func (g *Group) Create(name, description, userID string) (group *model.Group) {
+func (g *Group) Create(name, description, userID, logo, bgLogo string, isPrivate bool) (group *model.Group) {
 	group = &model.Group{
 		UUID:        uuid.Uuid(),
 		Name:        name,
 		Description: description,
 		Creator:     userID,
+		Logo:        logo,
+		BgLogo:      bgLogo,
+		IsPrivate:   isPrivate,
 		Users:       1,
 		CreatedAt:   time.Now().UTC(),
 		UpdatedAt:   time.Now().UTC(),

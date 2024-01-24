@@ -11,6 +11,7 @@ import (
 func Groups(g *gin.RouterGroup) {
 	// 创建 group
 	groupHandler := handler.NewGroupHandler(service.NewGroup(components.DBEngine))
+	g.GET("", groupHandler.Groups)
 	g.POST("", groupHandler.Create)
 	// 查询 group info
 	g.GET("/:group_id", groupHandler.Detail)

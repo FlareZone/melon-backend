@@ -23,8 +23,9 @@ func Web(r *gin.Engine) {
 }
 
 func NoLoginJwt(r *gin.Engine) {
-	postHandler := handler.NewPostHandler(service.NewPost(components.DBEngine))
-	r.GET("/api/v1/posts", postHandler.ListPosts)
+	postHandler := handler.NewPostHandler(service.NewPost(components.DBEngine), service.NewUser(components.DBEngine))
+	r.GET("/api/v1/posts", middleware.NoLoginJwt(), postHandler.ListPosts)
+	r.GET("/api/v1/posts/:post_id/comments", middleware.NoLoginJwt(), middleware.Post(), postHandler.PostComments)
 
 }
 
@@ -35,6 +36,7 @@ func Route(r *gin.Engine) {
 	{
 		auth.Auth(authGroup)
 	}
+	NoLoginJwt(r)
 	apiV1Group := r.Group("/api/v1")
 	{
 		apiV1Group.Use(middleware.Jwt())

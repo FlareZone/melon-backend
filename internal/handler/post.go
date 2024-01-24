@@ -1,22 +1,25 @@
 package handler
 
 import (
-	"fmt"
+	"github.com/FlareZone/melon-backend/internal/components"
 	"github.com/FlareZone/melon-backend/internal/ginctx"
+	"github.com/FlareZone/melon-backend/internal/handler/pages"
 	"github.com/FlareZone/melon-backend/internal/model"
 	"github.com/FlareZone/melon-backend/internal/response"
 	"github.com/FlareZone/melon-backend/internal/service"
 	"github.com/gin-gonic/gin"
 	"github.com/samber/lo"
+	"strconv"
 )
 
 type PostHandler struct {
-	post service.PostService
-	user service.UserService
+	post  service.PostService
+	user  service.UserService
+	group service.GroupService
 }
 
-func NewPostHandler(post service.PostService) *PostHandler {
-	return &PostHandler{post: post}
+func NewPostHandler(post service.PostService, user service.UserService) *PostHandler {
+	return &PostHandler{post: post, user: user, group: service.NewGroup(components.DBEngine)}
 }
 
 func (p *PostHandler) CreatePost(c *gin.Context) {
@@ -26,18 +29,23 @@ func (p *PostHandler) CreatePost(c *gin.Context) {
 		return
 	}
 	post := p.post.Create(params.Title, params.Content,
-		ginctx.AuthUserID(c), c.Param("group_id"),
-		params.Topics)
+		ginctx.AuthUserID(c),
+		params.Images,
+		params.Topics,
+		ginctx.AuthGroup(c))
 	if post.ID <= 0 {
 		response.JsonFail(c, response.PostFailed, "create fail")
 		return
 	}
-	response.JsonSuccess(c, new(PostResponse).WithPost(post, p.user.FindUserByUuid(post.Creator)))
+	creator := p.user.FindUserByUuid(post.Creator)
+	log.Info("creator", "uuid", creator.UUID, "nickName", creator.GetNickname(), "avatar", creator.GetAvatar())
+
+	response.JsonSuccess(c, new(PostResponse).WithPost(post, creator, ginctx.AuthGroup(c)))
 }
 
 func (p *PostHandler) Detail(c *gin.Context) {
 	post := ginctx.Post(c)
-	response.JsonSuccess(c, new(PostResponse).WithPost(post, p.user.FindUserByUuid(post.UUID)))
+	response.JsonSuccess(c, new(PostResponse).WithPost(post, p.user.FindUserByUuid(post.UUID), ginctx.AuthGroup(c)))
 }
 
 func (p *PostHandler) Edit(c *gin.Context) {
@@ -47,28 +55,29 @@ func (p *PostHandler) Edit(c *gin.Context) {
 		response.JsonFail(c, response.BadRequestParams, err.Error())
 		return
 	}
-	p.post.Edit(post, params.Title, params.Content, params.Topics)
-	response.JsonSuccess(c, new(PostResponse).WithPost(post, p.user.FindUserByUuid(post.UUID)))
+	p.post.Edit(post, params.Title, params.Content, params.Images, params.Topics)
+	response.JsonSuccess(c, new(PostResponse).WithPost(post, p.user.FindUserByUuid(post.UUID), ginctx.AuthGroup(c)))
 }
 
+// ListPosts 查询post列表
 func (p *PostHandler) ListPosts(c *gin.Context) {
-	var params PostListRequest
-	if err := c.BindJSON(&params); err != nil {
-		response.JsonFail(c, response.BadRequestParams, err.Error())
+	var (
+		nextID  = c.DefaultQuery("next_id", "")
+		size, _ = strconv.ParseInt(c.DefaultQuery("size", "10"), 10, 0)
+		orders  = c.DefaultQuery("orders", "-created_at")
+		post    = p.post.QueryPostByUuid(nextID)
+	)
+	whereCond, orderBy := pages.BuildPostListOrders(post, orders)
+	posts, nextID := p.post.Posts(ginctx.AuthUserID(c), whereCond, orderBy, int(size))
+	if len(posts) == 0 {
+		response.JsonSuccess(c, pages.PageResponse{List: make([]*PostResponse, 0), NextID: nextID})
 		return
 	}
-	if !params.IsValidOrderParam() {
-		response.JsonFail(c, response.BadRequestParams, fmt.Sprintf("invalid orders, %v", params.Orders))
-		return
-	}
-	post := p.post.QueryPostByUuid(params.NextID)
-	cond, orderBy := params.OrderParams(post)
-	posts, nextID := p.post.Posts(ginctx.AuthUserID(c), cond, orderBy, params.Size)
 	creators := lo.Keys(lo.SliceToMap(posts, func(item *model.Post) (string, *model.Post) {
 		return item.Creator, item
 	}))
-	withPosts := new(PostListResponse).WithPosts(posts, p.user.FindUsersByUuid(creators))
-	response.JsonSuccess(c, PageResponse{Data: withPosts.List, NextID: nextID})
+	withPosts := new(PostListResponse).WithPosts(posts, p.user.FindUsersByUuid(creators), p.post.QueryPostGroupMap(posts))
+	response.JsonSuccess(c, pages.PageResponse{List: withPosts.List, NextID: nextID})
 }
 
 func (p *PostHandler) Like(c *gin.Context) {
@@ -89,6 +98,7 @@ func (p *PostHandler) Share(c *gin.Context) {
 	response.JsonSuccess(c, post.Likes)
 }
 
+// Comment 评论
 func (p *PostHandler) Comment(c *gin.Context) {
 	var params PostCreateCommentRequest
 	if err := c.BindJSON(&params); err != nil {
@@ -100,9 +110,13 @@ func (p *PostHandler) Comment(c *gin.Context) {
 		response.JsonFail(c, response.CommentFailed, "comment fail")
 		return
 	}
-	response.JsonSuccess(c, new(CommentResponse).WithComment(comment))
+	user := p.user.FindUserByUuid(comment.Creator)
+	response.JsonSuccess(c, new(CommentResponse).WithComment(comment, nil, map[string]*model.User{
+		user.UUID: user,
+	}))
 }
 
+// Reply  回复评论
 func (p *PostHandler) Reply(c *gin.Context) {
 	var params PostCreateCommentRequest
 	if err := c.BindJSON(&params); err != nil {
@@ -116,5 +130,35 @@ func (p *PostHandler) Reply(c *gin.Context) {
 		response.JsonFail(c, response.CommentFailed, "comment fail")
 		return
 	}
-	response.JsonSuccess(c, new(CommentResponse).WithComment(comment))
+
+	user := p.user.FindUserByUuid(comment.Creator)
+	response.JsonSuccess(c, new(CommentResponse).WithComment(comment, nil, map[string]*model.User{
+		user.UUID: user,
+	}))
+}
+
+// PostComments 查询 post 的评论列表
+func (p *PostHandler) PostComments(c *gin.Context) {
+	nextID := c.DefaultQuery("next_id", "")
+	size, _ := strconv.ParseInt(c.DefaultQuery("size", "10"), 10, 0)
+	comment := p.post.QueryCommentByUuid(nextID)
+	post := ginctx.Post(c)
+	comments, nextID := p.post.QueryComments(post, comment, int(size))
+	replies := p.post.QueryReplies(post, comments)
+
+	creators := make([]string, 0)
+	lo.ForEach(comments, func(item *model.Comment, index int) {
+		creators = append(creators, item.Creator)
+	})
+	for _, v := range replies {
+		for _, reply := range v {
+			creators = append(creators, reply.Creator)
+		}
+	}
+	creators = lo.Uniq(creators)
+	users := p.user.QueryUserMap(creators)
+	response.JsonSuccess(c, pages.PageResponse{
+		List:   new(PostCommentListResponse).WithComments(comments, replies, users).Comments,
+		NextID: nextID,
+	})
 }

@@ -16,5 +16,6 @@ func InitComponents() {
 	if err != nil {
 		panic(err)
 	}
+	engine.ShowSQL(true)
 	DBEngine = engine
 }

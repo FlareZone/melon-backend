@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"fmt"
 	"github.com/FlareZone/melon-backend/common/consts"
 	"github.com/FlareZone/melon-backend/internal/components"
 	"github.com/FlareZone/melon-backend/internal/model"
@@ -21,6 +22,7 @@ func Post() gin.HandlerFunc {
 			response.JsonFail(c, response.BadRequestParams, "post_id not exists")
 			return
 		}
+		fmt.Println("hello world")
 		c.Set(consts.Post, post)
 		c.Next()
 		return
@@ -40,8 +42,8 @@ func Comment() gin.HandlerFunc {
 			return
 		}
 		parent := new(model.Comment)
-		if replyComment.ParentID != "" {
-			parent = service.NewPost(components.DBEngine).QueryCommentByUuid(parent.ParentID)
+		if replyComment.GetParentID() != "" {
+			parent = service.NewPost(components.DBEngine).QueryCommentByUuid(parent.GetParentID())
 		} else {
 			parent = replyComment
 		}

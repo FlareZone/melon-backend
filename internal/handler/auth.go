@@ -9,6 +9,7 @@ import (
 	"github.com/FlareZone/melon-backend/common/signature"
 	"github.com/FlareZone/melon-backend/common/uuid"
 	"github.com/FlareZone/melon-backend/config"
+	"github.com/FlareZone/melon-backend/internal/ginctx"
 	"github.com/FlareZone/melon-backend/internal/model"
 	"github.com/FlareZone/melon-backend/internal/response"
 	"github.com/FlareZone/melon-backend/internal/service"
@@ -150,6 +151,22 @@ func (a *AuthHandler) EthereumEip712SignatureNonce(c *gin.Context) {
 func (a *AuthHandler) getEthAddressNonceToken(ethAddress string) string {
 	sigNonce := a.sigNonce.FindSigNonceByEthAddress(ethAddress)
 	return sigNonce.NonceToken
+}
+
+func (a *AuthHandler) Refresh(c *gin.Context) {
+	user := ginctx.AuthUser(c)
+	jwtToken, err := jwt.Generate(user.UUID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "Failed to get userinfo", "error": err.Error()})
+		return
+	}
+	c.SetCookie(consts.JwtCookie, jwtToken, 24*3600, "/", config.App.Domain(), false, true)
+	result := map[string]interface{}{
+		"jwt_token":  jwtToken,
+		"expired_at": time.Now().Add(time.Hour * 24).UnixMilli(),
+	}
+	response.JsonSuccessWithMessage(c, result, "Refresh successful!")
+	return
 }
 
 func (a *AuthHandler) GetPayload(c *gin.Context) {
