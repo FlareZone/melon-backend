@@ -65,6 +65,7 @@ func (p *Post) Create(title, content, creator string, images, topics []string, g
 	session.Begin()
 	defer session.Close()
 	if group.ID > 0 {
+		group.Posts++
 		_, err := session.Table(&model.Group{}).ID(group.ID).Incr("posts", 1).Update(group)
 		if err != nil {
 			log.Error("update group posts fail", "group_id", group.UUID, "title", post.Title, "err", err)
@@ -163,7 +164,8 @@ func (p *Post) Comment(post *model.Post, content, creator string) (comment *mode
 	session := p.xorm.NewSession()
 	session.Begin()
 	defer session.Close()
-	_, err := session.Table(&model.Post{}).ID(post.ID).Incr("comments", 1).Update(&model.Post{})
+	post.Comments++
+	_, err := session.Table(&model.Post{}).ID(post.ID).Incr("comments", 1).Update(post)
 	if err != nil {
 		log.Error("update post fail", "post_id", post.UUID, "err", err)
 		return
@@ -196,11 +198,13 @@ func (p *Post) Reply(post *model.Post, parentComment *model.Comment, content, cr
 	session := p.xorm.NewSession()
 	session.Begin()
 	defer session.Close()
+	post.Comments++
 	_, err := session.Table(&model.Post{}).ID(post.ID).Incr("comments", 1).Update(post)
 	if err != nil {
 		log.Error("update post fail", "post_id", post.UUID, "err", err)
 		return
 	}
+	parentComment.Comments++
 	_, err = session.Table(&model.Comment{}).ID(parentComment.ID).Incr("comments", 1).Update(parentComment)
 	if err != nil {
 		log.Error("update parent comment fail", "post_id", post.UUID, "parent_comment_id", parentComment.UUID, "err", err)
@@ -268,6 +272,7 @@ func (p *Post) Posts(userID string, cond builder.Cond, orderBy string, size int)
 }
 
 func (p *Post) Like(post *model.Post) {
+	post.Likes++
 	_, err := p.xorm.Table(&model.Post{}).ID(post.ID).Incr("likes", 1).Update(post)
 	if err != nil {
 		log.Error("update post like fail", "post_id", post.UUID, "err", err)
@@ -276,6 +281,7 @@ func (p *Post) Like(post *model.Post) {
 }
 
 func (p *Post) View(post *model.Post) {
+	post.Views++
 	_, err := p.xorm.Table(&model.Post{}).ID(post.ID).Incr("views", 1).Update(post)
 	if err != nil {
 		log.Error("update post view fail", "post_id", post.UUID, "err", err)
@@ -284,6 +290,7 @@ func (p *Post) View(post *model.Post) {
 }
 
 func (p *Post) Share(post *model.Post) {
+	post.Shares++
 	_, err := p.xorm.Table(&model.Post{}).ID(post.ID).Incr("shares", 1).Update(post)
 	if err != nil {
 		log.Error("update post shares fail", "post_id", post.UUID, "err", err)

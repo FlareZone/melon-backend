@@ -89,13 +89,13 @@ func (p *PostHandler) Like(c *gin.Context) {
 func (p *PostHandler) View(c *gin.Context) {
 	post := ginctx.Post(c)
 	p.post.View(post)
-	response.JsonSuccess(c, post.Likes)
+	response.JsonSuccess(c, post.Views)
 }
 
 func (p *PostHandler) Share(c *gin.Context) {
 	post := ginctx.Post(c)
 	p.post.Share(post)
-	response.JsonSuccess(c, post.Likes)
+	response.JsonSuccess(c, post.Shares)
 }
 
 // Comment 评论
