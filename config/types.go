@@ -39,6 +39,7 @@ type aliyunOssConfig struct {
 	AccessKeySecret string
 	Endpoint        string
 	BucketName      string
+	SelfDomain      string
 }
 
 type redisConfig struct {

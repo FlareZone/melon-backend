@@ -13,6 +13,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/inconshreveable/log15"
 	"net/http"
+	"strings"
 	"time"
 )
 
@@ -34,6 +35,8 @@ func NewAssetHandler(svc service.AssetService) *AssetHandler {
 	return &AssetHandler{aliYunClient: client, svc: svc}
 }
 
+// OssPolicy https://help.aliyun.com/zh/oss/developer-reference/postobject#section-d5z-1ww-wdb
+// 需要绑定自定义域名： https://help.aliyun.com/zh/oss/user-guide/map-custom-domain-names-5
 func (o *AssetHandler) OssPolicy(c *gin.Context) {
 	var params AliyunOssRequest
 	if err := c.BindJSON(&params); err != nil {
@@ -47,7 +50,7 @@ func (o *AssetHandler) OssPolicy(c *gin.Context) {
 		"expiration": time.Now().Add(time.Minute * 5).UTC().Format("2006-01-02T15:04:05Z"),
 		"conditions": []interface{}{
 			map[string]string{"bucket": config.AliyunOSS.BucketName},
-			[]interface{}{"eq", "$Content-Disposition", "inline"},
+			[]interface{}{"in", "$content-type", []interface{}{"image/jpg", "image/png"}},
 		},
 	}
 	policyBytes, err := json.Marshal(policy)
@@ -88,6 +91,9 @@ func (o *AssetHandler) Asset(c *gin.Context) {
 		c.AbortWithStatus(http.StatusNotFound)
 		return
 	}
+	signedURL = strings.ReplaceAll(signedURL,
+		fmt.Sprintf("%s.%s", config.AliyunOSS.BucketName,
+			config.AliyunOSS.Endpoint), config.AliyunOSS.SelfDomain)
 	c.Redirect(302, signedURL)
 	return
 }
