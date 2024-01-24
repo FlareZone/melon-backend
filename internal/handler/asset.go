@@ -47,6 +47,7 @@ func (o *AssetHandler) OssPolicy(c *gin.Context) {
 		"expiration": time.Now().Add(time.Minute * 5).UTC().Format("2006-01-02T15:04:05Z"),
 		"conditions": []interface{}{
 			map[string]string{"bucket": config.AliyunOSS.BucketName},
+			[]interface{}{"eq", "$Content-Disposition", "inline"},
 		},
 	}
 	policyBytes, err := json.Marshal(policy)
