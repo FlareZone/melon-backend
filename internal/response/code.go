@@ -28,3 +28,7 @@ var (
 var (
 	OssBadBucketConfig = 6000001
 )
+
+var (
+	BadEmailVerificationCode = 7000001
+)

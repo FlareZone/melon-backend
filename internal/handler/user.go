@@ -9,15 +9,28 @@ import (
 
 type UserHandler struct {
 	user service.UserService
+	mail service.MailService
 }
 
 func NewUserHandler(user service.UserService) *UserHandler {
-	return &UserHandler{user: user}
+	return &UserHandler{user: user, mail: service.NewGoogleMail()}
 }
 
 func (u *UserHandler) Info(c *gin.Context) {
 	response.JsonSuccess(c, new(UserInfoResponse).WithUser(ginctx.AuthUser(c)))
 	return
+}
+
+func (u *UserHandler) EditProfile(c *gin.Context) {
+	var params EditUserProfileRequest
+	if err := c.BindJSON(&params); err != nil {
+		response.JsonFail(c, response.BadRequestParams, err.Error())
+		return
+	}
+	user := ginctx.AuthUser(c)
+	user.NickName = &params.NickName
+	user.Avatar = &params.Avatar
+	response.JsonSuccess(c, u.user.EditUser(user))
 }
 
 func (u *UserHandler) QueryUserInfo(c *gin.Context) {

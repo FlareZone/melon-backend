@@ -13,6 +13,8 @@ var (
 	App            *app
 	EIP712         *eip712
 	AliyunOSS      *aliyunOssConfig
+	RedisCfg       *redisConfig
+	GoogleMail     *googleMail
 )
 
 func InitConfig() {
@@ -43,5 +45,14 @@ func InitConfig() {
 		AccessKeyID:     viper.GetString("oss.aliyun.accessKeyId"),
 		AccessKeySecret: viper.GetString("oss.aliyun.accessKeySecret"),
 		BucketName:      viper.GetString("oss.aliyun.bucketName"),
+	}
+	RedisCfg = &redisConfig{
+		Addr:     viper.GetString("redis.melon.addr"),
+		Password: viper.GetString("redis.melon.password"),
+		DB:       viper.GetInt("redis.melon.db"),
+	}
+	GoogleMail = &googleMail{
+		Password: viper.GetString("mail.google.password"),
+		Sender:   viper.GetString("mail.google.sender"),
 	}
 }

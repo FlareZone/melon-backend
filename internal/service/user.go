@@ -24,6 +24,7 @@ type UserService interface {
 	QueryUserMap(uuids []string) (result map[string]*model.User)
 	IsFollower(user, queryUser *model.User) bool
 	IsFollowed(user, queryUser *model.User) bool
+	EditUser(user *model.User) bool
 }
 
 type User struct {
@@ -32,6 +33,11 @@ type User struct {
 
 func NewUser(xorm *xorm.Engine) UserService {
 	return &User{xorm: xorm}
+}
+
+func (u *User) EditUser(user *model.User) bool {
+	update, _ := u.xorm.Table(&model.User{}).ID(user.ID).Update(user)
+	return update > 0
 }
 
 func (u *User) IsFollower(user, queryUser *model.User) bool {

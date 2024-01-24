@@ -40,3 +40,14 @@ type aliyunOssConfig struct {
 	Endpoint        string
 	BucketName      string
 }
+
+type redisConfig struct {
+	Addr     string
+	Password string
+	DB       int
+}
+
+type googleMail struct {
+	Password string `json:"json"`
+	Sender   string `json:"sender"`
+}

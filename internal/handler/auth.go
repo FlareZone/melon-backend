@@ -24,12 +24,13 @@ import (
 )
 
 type AuthHandler struct {
-	user     service.UserService
-	sigNonce service.SigNonceService
+	user             service.UserService
+	sigNonce         service.SigNonceService
+	verificationCode service.VerificationCodeService
 }
 
 func NewAuthHandler(user service.UserService, sigNonce service.SigNonceService) *AuthHandler {
-	return &AuthHandler{user: user, sigNonce: sigNonce}
+	return &AuthHandler{user: user, sigNonce: sigNonce, verificationCode: service.NewVerificationCode()}
 }
 
 func (a *AuthHandler) GoogleOauthCallback(c *gin.Context) {
@@ -145,6 +146,61 @@ func (a *AuthHandler) EthereumEip712SignatureNonce(c *gin.Context) {
 		return
 	}
 	response.JsonSuccess(c, nonce)
+	return
+}
+
+func (a *AuthHandler) SendVerificationCode(c *gin.Context) {
+	var params EmailVerificationCodeRequest
+	if err := c.BindJSON(&params); err != nil {
+		response.JsonFail(c, response.BadRequestParams, err.Error())
+		return
+	}
+	a.verificationCode.SendLoginVerificationCode(params.To)
+	response.JsonSuccess(c, "send success")
+}
+
+// LoginWithEmail 如果没有注册，则注册
+func (a *AuthHandler) LoginWithEmail(c *gin.Context) {
+	var params EmailLoginRequest
+	if err := c.BindJSON(&params); err != nil {
+		response.JsonFail(c, response.BadRequestParams, err.Error())
+		return
+	}
+	if !a.verificationCode.VerifyEmailCode(params.Email, params.Code) {
+		response.JsonFail(c, response.BadEmailVerificationCode, fmt.Sprintf("email code is invalid"))
+		return
+	}
+	user := a.user.FindUserByEmail(params.Email)
+	if user.UUID == "" {
+		emailVerify := true
+		nickName := fmt.Sprintf("melon_%s", uuid.Uuid())
+		user = &model.User{
+			UUID:        uuid.Uuid(),
+			Email:       &params.Email,
+			NickName:    &nickName,
+			EmailVerify: &emailVerify,
+			CreatedAt:   time.Now().UTC(),
+			UpdatedAt:   time.Now().UTC(),
+		}
+		if !a.user.Register(*user) {
+			response.JsonFail(c, response.StatusInternalServerError, "register fail")
+			return
+		}
+	}
+
+	jwtToken, err := jwt.Generate(user.UUID)
+	if err != nil {
+		response.JsonFail(c, response.StatusInternalServerError, "generate jwt token fail")
+		return
+	}
+
+	c.SetCookie(consts.JwtCookie, jwtToken, 24*3600, "/", config.App.Domain(), false, true)
+
+	result := map[string]interface{}{
+		"jwt_token":  jwtToken,
+		"expired_at": time.Now().Add(time.Hour * 24).UnixMilli(),
+	}
+	response.JsonSuccessWithMessage(c, result, "Login successful!")
 	return
 }
 
