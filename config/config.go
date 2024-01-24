@@ -45,6 +45,7 @@ func InitConfig() {
 		AccessKeyID:     viper.GetString("oss.aliyun.accessKeyId"),
 		AccessKeySecret: viper.GetString("oss.aliyun.accessKeySecret"),
 		BucketName:      viper.GetString("oss.aliyun.bucketName"),
+		SelfDomain:      viper.GetString("oss.aliyun.selfDomain"),
 	}
 	RedisCfg = &redisConfig{
 		Addr:     viper.GetString("redis.melon.addr"),
