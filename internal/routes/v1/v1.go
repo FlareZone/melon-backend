@@ -2,7 +2,6 @@ package v1
 
 import (
 	"github.com/FlareZone/melon-backend/internal/middleware"
-	"github.com/FlareZone/melon-backend/internal/routes/v1/asset"
 	"github.com/FlareZone/melon-backend/internal/routes/v1/group"
 	"github.com/FlareZone/melon-backend/internal/routes/v1/post"
 	"github.com/FlareZone/melon-backend/internal/routes/v1/topic"
@@ -27,9 +26,5 @@ func V1(v1GroupRoute *gin.RouterGroup) {
 	topicGroupRoute := v1GroupRoute.Group("/topics")
 	{
 		topic.Topics(topicGroupRoute)
-	}
-	assetGroupRoute := v1GroupRoute.Group("/assets")
-	{
-		asset.Assets(assetGroupRoute)
 	}
 }
