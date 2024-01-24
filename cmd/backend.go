@@ -5,6 +5,7 @@ import (
 	"github.com/FlareZone/melon-backend/internal/components"
 	"github.com/FlareZone/melon-backend/internal/routes"
 	"github.com/FlareZone/melon-backend/internal/validator"
+	"github.com/FlareZone/melon-backend/internal/worker"
 	"github.com/gin-gonic/gin"
 	"github.com/spf13/cobra"
 )
@@ -18,6 +19,8 @@ var backendCmd = &cobra.Command{
 		components.InitComponents()
 		// gin 增加验证器
 		validator.ValidatorRegister()
+		// 执行 worker
+		worker.InitWorker()
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
 		r := gin.Default()

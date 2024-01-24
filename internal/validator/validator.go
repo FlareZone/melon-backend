@@ -1,6 +1,9 @@
 package validator
 
 import (
+	"context"
+	"github.com/FlareZone/melon-backend/common/consts"
+	"github.com/FlareZone/melon-backend/common/rdbkey"
 	"github.com/FlareZone/melon-backend/internal/components"
 	"github.com/FlareZone/melon-backend/internal/service"
 	"github.com/gin-gonic/gin/binding"
@@ -38,6 +41,22 @@ func ValidatorRegister() {
 			imageExt := fl.Field().String()
 			imageEnums := []string{"jpeg", "png"}
 			return slices.Contains(imageEnums, imageExt)
+		})
+
+		_ = v.RegisterValidation("mailType", func(fl validator.FieldLevel) bool {
+			mailType := fl.Field().String()
+			mailTypeEnums := []string{consts.LoginWithMail, consts.BindingUserWithMail}
+			return slices.Contains(mailTypeEnums, mailType)
+		})
+
+		_ = v.RegisterValidation("mailLogin", func(fl validator.FieldLevel) bool {
+			mailTo := fl.Field().String()
+			redisClient := components.Redis
+			result, _ := redisClient.Exists(context.Background(), rdbkey.MailLogin(mailTo)).Result()
+			if result > 0 {
+				return false
+			}
+			return true
 		})
 	}
 }

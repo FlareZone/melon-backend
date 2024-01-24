@@ -18,3 +18,12 @@ func (e EthereumEip712SignatureRequest) GetTypedData() string {
 type EthereumEip712SignatureNonceRequest struct {
 	EthAddress string `json:"eth_address" binding:"required,hexString"`
 }
+
+type EmailVerificationCodeRequest struct {
+	To string `json:"to" binding:"required,email"`
+}
+
+type EmailLoginRequest struct {
+	Email string `json:"email" binding:"required,email"`
+	Code  string `json:"code" binding:"required"`
+}

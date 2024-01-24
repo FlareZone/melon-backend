@@ -26,6 +26,10 @@ func Auth(authGroup *gin.RouterGroup) {
 	// google 登录回调
 	authGroup.GET("/google/callback", authHandler.GoogleOauthCallback)
 
+	// 发送email 验证码
+	authGroup.POST("/email/send_code", authHandler.SendVerificationCode)
+	authGroup.POST("/email/login", authHandler.LoginWithEmail)
+
 	// eth eip712 登录
 	authGroup.POST("/ethereum/signature/nonce", authHandler.EthereumEip712SignatureNonce)
 	authGroup.POST("/ethereum/signature/login", authHandler.EthereumEip712Signature)

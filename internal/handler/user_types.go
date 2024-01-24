@@ -65,3 +65,8 @@ func (u *UserInfoResponse) WithUser(user *model.User) *UserInfoResponse {
 		UpdatedAt:  user.UpdatedAt.Format(time.RFC3339),
 	}
 }
+
+type EditUserProfileRequest struct {
+	NickName string `json:"nick_name"`
+	Avatar   string `json:"avatar"`
+}
