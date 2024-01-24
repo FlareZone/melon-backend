@@ -30,6 +30,20 @@ func (b *BaseUserInfoResponse) WithUsers(users []*model.User) []*BaseUserInfoRes
 	return bases
 }
 
+type BaseUserDetailResponse struct {
+	*BaseUserInfoResponse
+	Followed bool `json:"followed"`
+	Follower bool `json:"follower"`
+}
+
+func (b *BaseUserDetailResponse) WithBaseInfoResponseUser(user *BaseUserInfoResponse, follower, followed bool) *BaseUserDetailResponse {
+	return &BaseUserDetailResponse{
+		BaseUserInfoResponse: user,
+		Follower:             follower,
+		Followed:             followed,
+	}
+}
+
 type UserInfoResponse struct {
 	BaseUserInfoResponse
 	Email      string `json:"email"`

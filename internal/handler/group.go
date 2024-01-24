@@ -1,39 +1,53 @@
 package handler
 
 import (
+	"github.com/FlareZone/melon-backend/internal/components"
 	"github.com/FlareZone/melon-backend/internal/ginctx"
+	"github.com/FlareZone/melon-backend/internal/model"
 	"github.com/FlareZone/melon-backend/internal/response"
 	"github.com/FlareZone/melon-backend/internal/service"
 	"github.com/gin-gonic/gin"
+	"github.com/samber/lo"
 )
 
 type GroupHandler struct {
 	group service.GroupService
+	user  service.UserService
 }
 
 func NewGroupHandler(group service.GroupService) *GroupHandler {
-	return &GroupHandler{group: group}
+	return &GroupHandler{group: group, user: service.NewUser(components.DBEngine)}
+}
+
+func (g *GroupHandler) Groups(c *gin.Context) {
+	user := ginctx.AuthUser(c)
+	groups := g.group.QueryUserGroups(user)
+	creators := lo.Keys(lo.SliceToMap(groups, func(item *model.Group) (string, *model.Group) {
+		return item.Creator, item
+	}))
+	users := g.user.QueryUserMap(creators)
+	response.JsonSuccess(c, new(GroupListResponse).WithGroups(groups, users))
 }
 
 func (g *GroupHandler) Create(c *gin.Context) {
-	var groupParams GroupCreateParams
-	if err := c.BindJSON(&groupParams); err != nil {
+	var params GroupCreateParams
+	if err := c.BindJSON(&params); err != nil {
 		response.JsonFail(c, response.BadRequestParams, err.Error())
 		return
 	}
-	group := g.group.QueryGroupByName(groupParams.Name)
+	group := g.group.QueryGroupByName(params.Name)
 	if group.ID > 0 {
 		response.JsonFail(c, response.BadRequestParams, "group is exists")
 		return
 	}
-	group = g.group.Create(groupParams.Name, groupParams.Description, ginctx.AuthUserID(c))
-	response.JsonSuccess(c, new(GroupResponse).WithGroup(group))
+	group = g.group.Create(params.Name, params.Description, ginctx.AuthUserID(c), params.Logo, params.BgLogo, params.IsPrivate)
+	response.JsonSuccess(c, new(GroupResponse).WithGroup(group, new(BaseUserInfoResponse).WithUser(g.user.FindUserByUuid(group.Creator))))
 	return
 }
 
 func (g *GroupHandler) Detail(c *gin.Context) {
 	group := ginctx.AuthGroup(c)
-	response.JsonSuccess(c, new(GroupResponse).WithGroup(group))
+	response.JsonSuccess(c, new(GroupResponse).WithGroup(group, new(BaseUserInfoResponse).WithUser(g.user.FindUserByUuid(group.Creator))))
 }
 
 func (g *GroupHandler) AddUser(c *gin.Context) {

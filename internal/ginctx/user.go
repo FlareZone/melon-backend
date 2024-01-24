@@ -7,7 +7,10 @@ import (
 )
 
 func AuthUserID(c *gin.Context) string {
-	value, _ := c.Get(consts.JwtUserID)
+	value, ok := c.Get(consts.JwtUserID)
+	if !ok {
+		return ""
+	}
 	return value.(string)
 }
 

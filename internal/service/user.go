@@ -3,6 +3,8 @@ package service
 import (
 	"github.com/FlareZone/melon-backend/internal/model"
 	"github.com/inconshreveable/log15"
+	"github.com/samber/lo"
+	"time"
 	"xorm.io/xorm"
 )
 
@@ -16,8 +18,12 @@ type UserService interface {
 	FindUserByUuid(uuid string) (user *model.User)
 	FindUsersByUuid(uuids []string) (users []*model.User)
 	Register(user model.User) bool
-	QueryFollowers(uuid string) (users []*model.User)
-	QueryFollowing(uuid string) (users []*model.User)
+	QueryFollowerUsers(uuid string) (users []*model.User)
+	QueryFollowedUsers(uuid string) (users []*model.User)
+	FollowUser(user *model.User, follower *model.User) bool
+	QueryUserMap(uuids []string) (result map[string]*model.User)
+	IsFollower(user, queryUser *model.User) bool
+	IsFollowed(user, queryUser *model.User) bool
 }
 
 type User struct {
@@ -28,11 +34,33 @@ func NewUser(xorm *xorm.Engine) UserService {
 	return &User{xorm: xorm}
 }
 
-// QueryFollowers  查询关注uuid的users
-func (u *User) QueryFollowers(uuid string) (users []*model.User) {
+func (u *User) IsFollower(user, queryUser *model.User) bool {
+	exist, _ := u.xorm.Table(&model.UserFollow{}).Where("user_id = ? and follower_id = ?", user.UUID, queryUser.UUID).Exist()
+	return exist
+}
+
+func (u *User) IsFollowed(user, queryUser *model.User) bool {
+	exist, _ := u.xorm.Table(&model.UserFollow{}).Where("user_id = ? and follower_id = ?", queryUser.UUID, user.UUID).Exist()
+	return exist
+}
+
+// FollowUser 关注用户
+func (u *User) FollowUser(user *model.User, follower *model.User) bool {
+	userFollow := &model.UserFollow{
+		UserID:     user.UUID,
+		FollowerID: follower.UUID,
+		CreatedAt:  time.Now().UTC(),
+		UpdatedAt:  time.Now().UTC(),
+	}
+	insert, _ := u.xorm.Table(&model.UserFollow{}).Insert(userFollow)
+	return insert > 0
+}
+
+// QueryFollowerUsers  关注列表
+func (u *User) QueryFollowerUsers(uuid string) (users []*model.User) {
 	users = make([]*model.User, 0)
 	userFollowers := make([]*model.UserFollow, 0)
-	err := u.xorm.Table(&model.UserFollow{}).Where("user_id = ? and deleted_at is null", uuid).Find(&userFollowers)
+	err := u.xorm.Table(&model.UserFollow{}).Where("user_id = ?", uuid).Find(&userFollowers)
 	if err != nil {
 		log.Error("query following user fail", "uuid", uuid, "err", err)
 		return
@@ -49,11 +77,11 @@ func (u *User) QueryFollowers(uuid string) (users []*model.User) {
 	return
 }
 
-// QueryFollowing 查询uuid关注的users
-func (u *User) QueryFollowing(uuid string) (users []*model.User) {
+// QueryFollowedUsers 被关注列表
+func (u *User) QueryFollowedUsers(uuid string) (users []*model.User) {
 	users = make([]*model.User, 0)
 	userFollowers := make([]*model.UserFollow, 0)
-	err := u.xorm.Table(&model.UserFollow{}).Where("follower_id = ? and deleted_at is null", uuid).Find(&userFollowers)
+	err := u.xorm.Table(&model.UserFollow{}).Where("follower_id = ?", uuid).Find(&userFollowers)
 	if err != nil {
 		log.Error("query f user fail", "uuid", uuid, "err", err)
 		return
@@ -99,7 +127,10 @@ func (u *User) FindUserByUuid(uuid string) (user *model.User) {
 
 func (u *User) FindUsersByUuid(uuids []string) (users []*model.User) {
 	users = make([]*model.User, 0)
-	_, err := u.xorm.Table(&model.User{}).In("uuid", uuids).Get(users)
+	if len(uuids) == 0 {
+		return
+	}
+	err := u.xorm.Table(&model.User{}).In("uuid", uuids).Find(&users)
 	if err != nil {
 		log.Error("User.FindUsersByUuid fail", "uuid", len(uuids), "err", err)
 	}
@@ -112,4 +143,19 @@ func (u *User) Register(user model.User) bool {
 		log.Error("User.Register fail", "email", user.Email, "eth_address", user.EthAddress, "err", err)
 	}
 	return insert > 0
+}
+
+func (u *User) QueryUserMap(uuids []string) (result map[string]*model.User) {
+	result = make(map[string]*model.User)
+	users := make([]*model.User, 0)
+	if len(uuids) == 0 {
+		return
+	}
+	err := u.xorm.Table(&model.User{}).In("uuid", uuids).Find(&users)
+	if err != nil {
+		log.Error("User.FindUsersByUuid fail", "uuid", len(uuids), "err", err)
+	}
+	return lo.SliceToMap(users, func(item *model.User) (string, *model.User) {
+		return item.UUID, item
+	})
 }

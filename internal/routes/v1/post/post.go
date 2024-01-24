@@ -9,7 +9,7 @@ import (
 )
 
 func Comments(postDetailCommentGroup *gin.RouterGroup) {
-	postHandler := handler.NewPostHandler(service.NewPost(components.DBEngine))
+	postHandler := handler.NewPostHandler(service.NewPost(components.DBEngine), service.NewUser(components.DBEngine))
 	// 修改评论
 	postDetailCommentGroup.POST("", func(context *gin.Context) {})
 
@@ -19,7 +19,7 @@ func Comments(postDetailCommentGroup *gin.RouterGroup) {
 }
 
 func Detail(postDetailGroup *gin.RouterGroup) {
-	postHandler := handler.NewPostHandler(service.NewPost(components.DBEngine))
+	postHandler := handler.NewPostHandler(service.NewPost(components.DBEngine), service.NewUser(components.DBEngine))
 	// 更新Post
 	postDetailGroup.POST("", postHandler.Edit)
 
@@ -33,9 +33,6 @@ func Detail(postDetailGroup *gin.RouterGroup) {
 	// 发表评论
 	postDetailGroup.POST("/comments", postHandler.Comment)
 
-	// 获取Post的comments
-	postDetailGroup.GET("/comments", func(context *gin.Context) {})
-
 	postDetailCommentGroup := postDetailGroup.Group("/comments/:comment_id")
 	postDetailCommentGroup.Use(middleware.Comment())
 	{
@@ -44,7 +41,7 @@ func Detail(postDetailGroup *gin.RouterGroup) {
 }
 
 func Posts(postGroup *gin.RouterGroup) {
-	postHandler := handler.NewPostHandler(service.NewPost(components.DBEngine))
+	postHandler := handler.NewPostHandler(service.NewPost(components.DBEngine), service.NewUser(components.DBEngine))
 	// 发表Post
 	postGroup.POST("", postHandler.CreatePost)
 	postDetailGroup := postGroup.Group("/:post_id")

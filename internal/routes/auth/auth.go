@@ -4,6 +4,7 @@ import (
 	"github.com/FlareZone/melon-backend/config"
 	"github.com/FlareZone/melon-backend/internal/components"
 	"github.com/FlareZone/melon-backend/internal/handler"
+	"github.com/FlareZone/melon-backend/internal/middleware"
 	"github.com/FlareZone/melon-backend/internal/service"
 	"github.com/gin-gonic/gin"
 	"github.com/inconshreveable/log15"
@@ -30,4 +31,5 @@ func Auth(authGroup *gin.RouterGroup) {
 	authGroup.POST("/ethereum/signature/login", authHandler.EthereumEip712Signature)
 	authGroup.GET("/ethereum/signature/:nonce/payload", authHandler.GetPayload)
 
+	authGroup.POST("/refresh", middleware.Jwt(), authHandler.Refresh)
 }

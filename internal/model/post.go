@@ -12,7 +12,7 @@ type Post struct {
 	Comments  uint64     `xorm:"comments" json:"comments"`
 	Views     uint64     `xorm:"views" json:"views"`
 	Shares    uint64     `xorm:"shares" json:"shares"`
-	GroupID   string     `xorm:"group_id" json:"group_id"`
+	GroupID   *string    `xorm:"char(32) nullable 'group_id'" json:"group_id"`
 	Creator   string     `xorm:"creator" json:"creator"`
 	CreatedAt time.Time  `xorm:"created_at" json:"created_at"`
 	UpdatedAt time.Time  `xorm:"updated_at" json:"updated_at"`
@@ -21,6 +21,13 @@ type Post struct {
 
 func (p Post) TableName() string {
 	return "posts"
+}
+
+func (p Post) GetGroupID() string {
+	if p.GroupID == nil {
+		return ""
+	}
+	return *p.GroupID
 }
 
 type PostTopic struct {

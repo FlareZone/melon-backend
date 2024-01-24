@@ -7,6 +7,9 @@ import (
 )
 
 func AuthGroup(c *gin.Context) *model.Group {
-	value, _ := c.Get(consts.AuthGroup)
+	value, ok := c.Get(consts.AuthGroup)
+	if !ok {
+		return new(model.Group)
+	}
 	return value.(*model.Group)
 }

@@ -1,27 +1,30 @@
 package handler
 
 import (
+	"encoding/json"
+	"github.com/FlareZone/melon-backend/internal/handler/pages"
 	"github.com/FlareZone/melon-backend/internal/model"
 	"github.com/samber/lo"
 	"strings"
 	"time"
-	"xorm.io/builder"
 )
 
 type PostCreateParamRequest struct {
 	Title   string   `json:"title" binding:"required"`
 	Content string   `json:"content" binding:"required"`
 	Topics  []string `json:"topics"`
+	Images  []string `json:"images"`
 }
 
 type PostEditParamRequest struct {
 	Title   string   `json:"title"`
 	Content string   `json:"content"`
 	Topics  []string `json:"topics"`
+	Images  []string `json:"images"`
 }
 
 type PostListRequest struct {
-	PageRequest
+	pages.PageRequest
 	Orders string `json:"orders"`
 }
 
@@ -42,51 +45,26 @@ func (p PostListRequest) IsValidOrderParam() bool {
 	return true
 }
 
-func (p PostListRequest) OrderParams(current *model.Post) (cond builder.Cond, orderStr string) {
-	orderArr := strings.Split(p.Orders, ",")
-	if len(orderArr) == 0 {
-		orderArr = append(orderArr, "-created_at")
-	}
-
-	var orders []string
-	for _, order := range orderArr {
-		if strings.EqualFold(order[:1], "-") {
-			orders = append(orders, "posts."+order[:1]+" desc")
-		} else if strings.EqualFold(order[:1], "+") {
-			orders = append(orders, "posts."+order[:1]+" asc")
-		}
-	}
-	orderStr = strings.Join(orders, ",")
-	if current.ID <= 0 {
-		cond = nil
-		return
-	}
-
-	switch orderArr[0] {
-	case "-created_at":
-		cond = builder.Lte{"posts.created_at": current.CreatedAt}
-	case "+created_at":
-		cond = builder.Gte{"posts.created_at": current.CreatedAt}
-	default:
-		cond = nil
-	}
-	return
-}
-
 type PostResponse struct {
-	UUID      string                `json:"uuid"`
-	Title     string                `json:"title"`
-	Content   string                `json:"content"`
-	Likes     uint64                `json:"likes"`
-	Comments  uint64                `json:"comments"`
-	Views     uint64                `json:"views"`
-	GroupID   string                `json:"group_id"`
-	Creator   *BaseUserInfoResponse `json:"creator"`
-	CreatedAt string                `json:"created_at"`
-	UpdatedAt string                `json:"updated_at"`
+	UUID      string                 `json:"uuid"`
+	Title     string                 `json:"title"`
+	Content   string                 `json:"content"`
+	Likes     uint64                 `json:"likes"`
+	Comments  uint64                 `json:"comments"`
+	Views     uint64                 `json:"views"`
+	Images    []string               `json:"images"`
+	Group     *BaseGroupInfoResponse `json:"group"`
+	Creator   *BaseUserInfoResponse  `json:"creator"`
+	CreatedAt string                 `json:"created_at"`
+	UpdatedAt string                 `json:"updated_at"`
 }
 
-func (p *PostResponse) WithPost(post *model.Post, user *model.User) *PostResponse {
+func (p *PostResponse) WithPost(post *model.Post, user *model.User, group *model.Group) *PostResponse {
+	if post == nil || post.ID <= 0 {
+		return new(PostResponse)
+	}
+	var images []string
+	_ = json.Unmarshal([]byte(post.Images), &images)
 	return &PostResponse{
 		UUID:      post.UUID,
 		Title:     post.Title,
@@ -94,7 +72,8 @@ func (p *PostResponse) WithPost(post *model.Post, user *model.User) *PostRespons
 		Likes:     post.Likes,
 		Comments:  post.Comments,
 		Views:     post.Views,
-		GroupID:   post.GroupID,
+		Images:    images,
+		Group:     new(BaseGroupInfoResponse).WithGroup(group),
 		Creator:   new(BaseUserInfoResponse).WithUser(user),
 		CreatedAt: post.CreatedAt.Format(time.RFC3339),
 		UpdatedAt: post.UpdatedAt.Format(time.RFC3339),
@@ -105,13 +84,13 @@ type PostListResponse struct {
 	List []*PostResponse `json:"list"`
 }
 
-func (p *PostListResponse) WithPosts(posts []*model.Post, users []*model.User) *PostListResponse {
+func (p *PostListResponse) WithPosts(posts []*model.Post, users []*model.User, groups map[string]*model.Group) *PostListResponse {
 	result := &PostListResponse{List: make([]*PostResponse, 0)}
 	for _, post := range posts {
 		user, _ := lo.Find(users, func(user *model.User) bool {
 			return strings.EqualFold(user.UUID, post.Creator)
 		})
-		result.List = append(result.List, new(PostResponse).WithPost(post, user))
+		result.List = append(result.List, new(PostResponse).WithPost(post, user, groups[post.GetGroupID()]))
 	}
 	return result
 }
@@ -121,27 +100,60 @@ type PostCreateCommentRequest struct {
 }
 
 type CommentResponse struct {
-	UUID      string `json:"uuid"`
-	PostID    string `json:"post_id"`
-	ParentID  string `json:"parent_id"`
-	Content   string `json:"content"`
-	Creator   string `json:"creator"`
-	Likes     uint   `json:"likes"`
-	Comments  uint   `json:"comments"`
-	CreatedAt string `json:"created_at"`
-	UpdatedAt string `json:"updated_at"`
+	UUID      string                `json:"uuid"`
+	PostID    string                `json:"post_id"`
+	ParentID  string                `json:"parent_id"`
+	Content   string                `json:"content"`
+	Creator   *BaseUserInfoResponse `json:"creator"`
+	Likes     uint                  `json:"likes"`
+	Comments  uint                  `json:"comments"`
+	Replies   []CommentResponse     `json:"replies"`
+	CreatedAt string                `json:"created_at"`
+	UpdatedAt string                `json:"updated_at"`
 }
 
-func (c *CommentResponse) WithComment(comment *model.Comment) *CommentResponse {
+func (c *CommentResponse) WithComment(comment *model.Comment, replies []*model.Comment, users map[string]*model.User) *CommentResponse {
+	replyComments := make([]CommentResponse, 0)
+	for _, reply := range replies {
+		replyComments = append(replyComments, CommentResponse{
+			UUID:      reply.UUID,
+			PostID:    reply.PostID,
+			ParentID:  reply.GetParentID(),
+			Content:   reply.Content,
+			Likes:     reply.Likes,
+			Comments:  reply.Comments,
+			Creator:   new(BaseUserInfoResponse).WithUser(users[reply.Creator]),
+			Replies:   make([]CommentResponse, 0),
+			CreatedAt: reply.CreatedAt.Format(time.RFC3339),
+			UpdatedAt: reply.UpdatedAt.Format(time.RFC3339),
+		})
+	}
 	return &CommentResponse{
 		UUID:      comment.UUID,
 		PostID:    comment.PostID,
-		ParentID:  comment.ParentID,
+		ParentID:  comment.GetParentID(),
 		Content:   comment.Content,
 		Likes:     comment.Likes,
 		Comments:  comment.Comments,
-		Creator:   comment.Creator,
+		Creator:   new(BaseUserInfoResponse).WithUser(users[comment.Creator]),
+		Replies:   replyComments,
 		CreatedAt: comment.CreatedAt.Format(time.RFC3339),
 		UpdatedAt: comment.UpdatedAt.Format(time.RFC3339),
 	}
+}
+
+type PostCommentListRequest struct {
+	pages.PageRequest
+}
+
+type PostCommentListResponse struct {
+	Comments []*CommentResponse `json:"comments"`
+}
+
+func (p *PostCommentListResponse) WithComments(comments []*model.Comment, replies map[string][]*model.Comment, users map[string]*model.User) *PostCommentListResponse {
+	result := &PostCommentListResponse{Comments: make([]*CommentResponse, 0)}
+	for _, comment := range comments {
+		result.Comments = append(result.Comments, new(CommentResponse).WithComment(comment, replies[comment.UUID], users))
+	}
+	return result
 }
