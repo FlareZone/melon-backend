@@ -50,6 +50,8 @@
             formData.append('OSSAccessKeyId', data.accessKey_id);
             formData.append('signature', data.signature);
             formData.append('file', file);
+            formData.append('Content-Disposition', 'inline');
+
 
             // 上传到OSS
             fetch(`${data.upload_url}`, {
