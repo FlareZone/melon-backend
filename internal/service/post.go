@@ -412,9 +412,6 @@ func (p *Post) QueryPostGroupMap(posts []*model.Post) (groups map[string]*model.
 	return
 }
 
-// QueryUserPostLikes(user *model.User, postUuidList []string) map[string]bool
-//	QueryUserPostShares(user *model.User, postUuidList []string) map[string]bool
-
 func (p *Post) QueryUserPostShares(user *model.User, postUuidList []string) (shares map[string]bool) {
 	if len(postUuidList) == 0 {
 		return
@@ -423,7 +420,9 @@ func (p *Post) QueryUserPostShares(user *model.User, postUuidList []string) (sha
 	for _, postUuid := range postUuidList {
 		shares[postUuid] = false
 	}
-
+	if user.ID <= 0 {
+		return
+	}
 	var queryShares []*model.PostShare
 	err := p.xorm.Table(&model.PostShare{}).Where("user_id = ?", user.UUID).In("post_id", postUuidList).Find(&queryShares)
 	if err != nil {
@@ -443,6 +442,9 @@ func (p *Post) QueryUserPostLikes(user *model.User, postUuidList []string) (like
 	likes = make(map[string]bool)
 	for _, postUuid := range postUuidList {
 		likes[postUuid] = false
+	}
+	if user.ID <= 0 {
+		return
 	}
 	var queryLikes []*model.PostLike
 	err := p.xorm.Table(&model.PostLike{}).Where("user_id = ?", user.UUID).In("post_id", postUuidList).Find(&queryLikes)

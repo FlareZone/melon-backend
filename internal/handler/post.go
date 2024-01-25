@@ -45,7 +45,7 @@ func (p *PostHandler) Detail(c *gin.Context) {
 	post := ginctx.Post(c)
 	shares := p.post.QueryUserPostShares(ginctx.AuthUser(c), []string{post.UUID})
 	likes := p.post.QueryUserPostLikes(ginctx.AuthUser(c), []string{post.UUID})
-	data := new(PostResponse).WithPost(post, p.user.FindUserByUuid(post.UUID), ginctx.AuthGroup(c)).
+	data := new(PostResponse).WithPost(post, p.user.FindUserByUuid(post.Creator), ginctx.AuthGroup(c)).
 		WithLiked(likes[post.UUID]).WithShared(shares[post.UUID])
 	response.JsonSuccess(c, data)
 }
@@ -58,7 +58,7 @@ func (p *PostHandler) Edit(c *gin.Context) {
 		return
 	}
 	p.post.Edit(post, params.Title, params.Content, params.Images, params.Topics)
-	response.JsonSuccess(c, new(PostResponse).WithPost(post, p.user.FindUserByUuid(post.UUID), ginctx.AuthGroup(c)))
+	response.JsonSuccess(c, new(PostResponse).WithPost(post, p.user.FindUserByUuid(post.Creator), ginctx.AuthGroup(c)))
 }
 
 // ListPosts 查询post列表
