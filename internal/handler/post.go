@@ -76,13 +76,24 @@ func (p *PostHandler) ListPosts(c *gin.Context) {
 	creators := lo.Keys(lo.SliceToMap(posts, func(item *model.Post) (string, *model.Post) {
 		return item.Creator, item
 	}))
-	withPosts := new(PostListResponse).WithPosts(posts, p.user.FindUsersByUuid(creators), p.post.QueryPostGroupMap(posts))
+	postUuidList := lo.Keys(lo.SliceToMap(posts, func(item *model.Post) (string, *model.Post) {
+		return item.UUID, item
+	}))
+	likes := p.post.QueryUserPostLikes(ginctx.AuthUser(c), postUuidList)
+	shares := p.post.QueryUserPostShares(ginctx.AuthUser(c), postUuidList)
+	withPosts := new(PostListResponse).
+		WithPosts(posts, p.user.FindUsersByUuid(creators), p.post.QueryPostGroupMap(posts)).WithLikes(likes).WithShares(shares)
 	response.JsonSuccess(c, pages.PageResponse{List: withPosts.List, NextID: nextID})
 }
 
 func (p *PostHandler) Like(c *gin.Context) {
 	post := ginctx.Post(c)
-	p.post.Like(post)
+	if p.post.IsLiked(post, ginctx.AuthUser(c)) {
+		response.JsonSuccess(c, post.Likes)
+		return
+	}
+
+	p.post.Like(post, ginctx.AuthUser(c))
 	response.JsonSuccess(c, post.Likes)
 }
 
@@ -94,7 +105,11 @@ func (p *PostHandler) View(c *gin.Context) {
 
 func (p *PostHandler) Share(c *gin.Context) {
 	post := ginctx.Post(c)
-	p.post.Share(post)
+	if p.post.IsShared(post, ginctx.AuthUser(c)) {
+		response.JsonSuccess(c, post.Shares)
+		return
+	}
+	p.post.Share(post, ginctx.AuthUser(c))
 	response.JsonSuccess(c, post.Shares)
 }
 

@@ -42,3 +42,25 @@ type PostTopic struct {
 func (p PostTopic) TableName() string {
 	return "post_topics"
 }
+
+type PostLike struct {
+	ID        uint64    `xorm:"pk autoincr 'id'" json:"id"`
+	UserID    string    `xorm:"char(32) unique(user_id, post_id) 'user_id'" json:"user_id"`
+	PostID    string    `xorm:"char(32) 'post_id'" json:"post_id"`
+	CreatedAt time.Time `xorm:"created_at" json:"created_at"`
+}
+
+func (p PostLike) TableName() string {
+	return "post_likes"
+}
+
+type PostShare struct {
+	ID        uint64    `xorm:"pk autoincr 'id'" json:"id"`
+	UserID    string    `xorm:"char(32) unique(user_id, post_id) 'user_id'" json:"user_id"`
+	PostID    string    `xorm:"char(32) 'post_id'" json:"post_id"`
+	CreatedAt time.Time `xorm:"created_at" json:"created_at"`
+}
+
+func (p PostShare) TableName() string {
+	return "post_shares"
+}
