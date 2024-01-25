@@ -9,7 +9,7 @@ import (
 var (
 	JwtCfg         *jwtConfig
 	GoogleOauthCfg *oauth2.Config
-	MelonDBDsn     melonDBDsn
+	MelonDB        melonDB
 	App            *app
 	EIP712         *eip712
 	AliyunOSS      *aliyunOssConfig
@@ -29,7 +29,10 @@ func InitConfig() {
 		Secret: viper.GetString("jwt.secret"),
 		Issuer: viper.GetString("jwt.issuer"),
 	}
-	MelonDBDsn = melonDBDsn(viper.GetString("database.melon.dsn"))
+	MelonDB = melonDB{
+		DSN:     viper.GetString("database.melon.dsn"),
+		Logging: viper.GetBool("database.melon.logging"),
+	}
 	App = &app{
 		Name: viper.GetString("app_name"),
 		Url:  viper.GetString("app_url"),

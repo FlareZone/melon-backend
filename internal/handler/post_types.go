@@ -49,6 +49,8 @@ type PostResponse struct {
 	UUID      string                 `json:"uuid"`
 	Title     string                 `json:"title"`
 	Content   string                 `json:"content"`
+	Liked     bool                   `json:"liked"`
+	Shared    bool                   `json:"shared"`
 	Likes     uint64                 `json:"likes"`
 	Comments  uint64                 `json:"comments"`
 	Views     uint64                 `json:"views"`
@@ -80,6 +82,16 @@ func (p *PostResponse) WithPost(post *model.Post, user *model.User, group *model
 	}
 }
 
+func (p *PostResponse) WithShared(shared bool) *PostResponse {
+	p.Shared = shared
+	return p
+}
+
+func (p *PostResponse) WithLiked(liked bool) *PostResponse {
+	p.Liked = liked
+	return p
+}
+
 type PostListResponse struct {
 	List []*PostResponse `json:"list"`
 }
@@ -93,6 +105,20 @@ func (p *PostListResponse) WithPosts(posts []*model.Post, users []*model.User, g
 		result.List = append(result.List, new(PostResponse).WithPost(post, user, groups[post.GetGroupID()]))
 	}
 	return result
+}
+
+func (p *PostListResponse) WithLikes(likes map[string]bool) *PostListResponse {
+	for idx := range p.List {
+		p.List[idx].WithLiked(likes[p.List[idx].UUID])
+	}
+	return p
+}
+
+func (p *PostListResponse) WithShares(shares map[string]bool) *PostListResponse {
+	for idx := range p.List {
+		p.List[idx].WithShared(shares[p.List[idx].UUID])
+	}
+	return p
 }
 
 type PostCreateCommentRequest struct {

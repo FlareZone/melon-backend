@@ -16,11 +16,11 @@ var (
 
 func initMysql() {
 	// init DBEngine
-	engine, err := xorm.NewEngine("mysql", config.MelonDBDsn.String())
+	engine, err := xorm.NewEngine("mysql", config.MelonDB.DSN)
 	if err != nil {
 		panic(fmt.Errorf("connect to mysql fail, err is %v", err))
 	}
-	engine.ShowSQL(true)
+	engine.ShowSQL(config.MelonDB.Logging)
 	DBEngine = engine
 }
 

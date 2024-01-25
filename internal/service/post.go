@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"github.com/FlareZone/melon-backend/common/uuid"
 	"github.com/FlareZone/melon-backend/internal/model"
+	"github.com/FlareZone/melon-backend/internal/service/sess"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/samber/lo"
 	"time"
@@ -22,9 +23,13 @@ type PostService interface {
 	QueryComments(post *model.Post, currentComment *model.Comment, size int) (comments []*model.Comment, nextID string)
 	QueryReplies(post *model.Post, comments []*model.Comment) (replies map[string][]*model.Comment)
 	QueryPostGroupMap(posts []*model.Post) (groups map[string]*model.Group)
-	Like(post *model.Post)
+	Like(post *model.Post, user *model.User)
 	View(post *model.Post)
-	Share(post *model.Post)
+	Share(post *model.Post, user *model.User)
+	IsLiked(post *model.Post, user *model.User) bool
+	IsShared(post *model.Post, user *model.User) bool
+	QueryUserPostLikes(user *model.User, postUuidList []string) map[string]bool
+	QueryUserPostShares(user *model.User, postUuidList []string) map[string]bool
 }
 
 type Post struct {
@@ -271,13 +276,30 @@ func (p *Post) Posts(userID string, cond builder.Cond, orderBy string, size int)
 	return posts[0:size], posts[size].UUID
 }
 
-func (p *Post) Like(post *model.Post) {
-	post.Likes++
-	_, err := p.xorm.Table(&model.Post{}).ID(post.ID).Incr("likes", 1).Update(post)
-	if err != nil {
-		log.Error("update post like fail", "post_id", post.UUID, "err", err)
-		return
-	}
+func (p *Post) Like(post *model.Post, user *model.User) {
+	err := sess.Transaction(p.xorm, func(session *xorm.Session) error {
+		postLike := &model.PostLike{
+			UserID:    user.UUID,
+			PostID:    post.UUID,
+			CreatedAt: time.Now().UTC(),
+		}
+		_, err := session.Table(&model.PostLike{}).Insert(postLike)
+		if err != nil {
+			return err
+		}
+		post.Likes++
+		_, err = session.Table(&model.Post{}).ID(post.ID).Incr("likes", 1).Update(post)
+		if err != nil {
+			return err
+		}
+		return nil
+	})
+	log.Error("like post fail", "user_id", user.UUID, "post_id", post.UUID, "err", err)
+}
+
+func (p *Post) IsLiked(post *model.Post, user *model.User) bool {
+	exist, _ := p.xorm.Table(&model.PostLike{}).Where("user_id = ? and post_id", user.UUID, post.UUID).Exist()
+	return exist
 }
 
 func (p *Post) View(post *model.Post) {
@@ -289,13 +311,30 @@ func (p *Post) View(post *model.Post) {
 	}
 }
 
-func (p *Post) Share(post *model.Post) {
-	post.Shares++
-	_, err := p.xorm.Table(&model.Post{}).ID(post.ID).Incr("shares", 1).Update(post)
-	if err != nil {
-		log.Error("update post shares fail", "post_id", post.UUID, "err", err)
-		return
-	}
+func (p *Post) IsShared(post *model.Post, user *model.User) bool {
+	exist, _ := p.xorm.Table(&model.PostShare{}).Where("user_id = ? and post_id", user.UUID, post.UUID).Exist()
+	return exist
+}
+
+func (p *Post) Share(post *model.Post, user *model.User) {
+	err := sess.Transaction(p.xorm, func(session *xorm.Session) error {
+		postLike := &model.PostShare{
+			UserID:    user.UUID,
+			PostID:    post.UUID,
+			CreatedAt: time.Now().UTC(),
+		}
+		_, err := session.Table(&model.PostShare{}).Insert(postLike)
+		if err != nil {
+			return err
+		}
+		post.Shares++
+		_, err = session.Table(&model.Post{}).ID(post.ID).Incr("shares", 1).Update(post)
+		if err != nil {
+			return err
+		}
+		return nil
+	})
+	log.Error("share post fail", "user_id", user.UUID, "post_id", post.UUID, "err", err)
 }
 
 func (p *Post) QueryComments(post *model.Post, currentComment *model.Comment, size int) (comments []*model.Comment, nextID string) {
@@ -370,5 +409,49 @@ func (p *Post) QueryPostGroupMap(posts []*model.Post) (groups map[string]*model.
 	groups = lo.SliceToMap(rawGroups, func(item *model.Group) (string, *model.Group) {
 		return item.UUID, item
 	})
+	return
+}
+
+// QueryUserPostLikes(user *model.User, postUuidList []string) map[string]bool
+//	QueryUserPostShares(user *model.User, postUuidList []string) map[string]bool
+
+func (p *Post) QueryUserPostShares(user *model.User, postUuidList []string) (shares map[string]bool) {
+	if len(postUuidList) == 0 {
+		return
+	}
+	shares = make(map[string]bool)
+	for _, postUuid := range postUuidList {
+		shares[postUuid] = false
+	}
+
+	var queryShares []*model.PostShare
+	err := p.xorm.Table(&model.PostShare{}).Where("user_id = ?", user.UUID).In("post_id", postUuidList).Find(&queryShares)
+	if err != nil {
+		log.Error("query post share fail", "user", user.UUID, "post_uuids", postUuidList, "err", err)
+		return
+	}
+	for _, queryShare := range queryShares {
+		shares[queryShare.PostID] = true
+	}
+	return
+}
+
+func (p *Post) QueryUserPostLikes(user *model.User, postUuidList []string) (likes map[string]bool) {
+	if len(postUuidList) == 0 {
+		return
+	}
+	likes = make(map[string]bool)
+	for _, postUuid := range postUuidList {
+		likes[postUuid] = false
+	}
+	var queryLikes []*model.PostLike
+	err := p.xorm.Table(&model.PostLike{}).Where("user_id = ?", user.UUID).In("post_id", postUuidList).Find(&queryLikes)
+	if err != nil {
+		log.Error("query post share fail", "user", user.UUID, "post_uuids", postUuidList, "err", err)
+		return
+	}
+	for _, queryLike := range queryLikes {
+		likes[queryLike.PostID] = true
+	}
 	return
 }

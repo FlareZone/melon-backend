@@ -7,6 +7,11 @@ type jwtConfig struct {
 	Issuer string
 }
 
+type melonDB struct {
+	DSN     string
+	Logging bool
+}
+
 type melonDBDsn string
 
 func (m melonDBDsn) String() string {
