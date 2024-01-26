@@ -8,7 +8,7 @@ type User struct {
 	ID          uint64     `xorm:"pk autoincr 'id'" json:"id"`
 	UUID        string     `xorm:"char(32) unique notnull 'uuid'" json:"uuid"`
 	EthAddress  *string    `xorm:"char(42) nullable unique 'eth_address'" json:"eth_address"`
-	NickName    *string    `xorm:"varchar(128) nullable 'nick_name'" json:"nick_name"`
+	NickName    *string    `xorm:"varchar(128) unique 'nick_name'" json:"nick_name"`
 	Email       *string    `xorm:"varchar(64) nullable unique 'email'" json:"email"`
 	EmailVerify *bool      `xorm:"'email_verify'" json:"email_verify"`
 	Avatar      *string    `xorm:"varchar(256) 'avatar'" json:"avatar"`
