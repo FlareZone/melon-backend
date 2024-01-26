@@ -28,6 +28,9 @@ func NoLoginJwt(r *gin.Engine) {
 	r.GET("/api/v1/posts", middleware.NoLoginJwt(), postHandler.ListPosts)
 	r.GET("/api/v1/posts/:post_id/comments", middleware.NoLoginJwt(), middleware.Post(), postHandler.PostComments)
 
+	bannerHandler := &handler.BannerHandler{}
+	r.GET("/api/v1/banners", middleware.NoLoginJwt(), bannerHandler.List)
+
 	// assets 无需授权
 	assetGroupRoute := r.Group("/api/v1/assets")
 	{
