@@ -9,6 +9,7 @@ import (
 var bannerBytes []byte
 
 type Banner struct {
+	Image string `json:"image"`
 	Link  string `json:"link"`
 	Title string `json:"title"`
 }

@@ -1,7 +1,6 @@
 package middleware
 
 import (
-	"fmt"
 	"github.com/FlareZone/melon-backend/common/consts"
 	"github.com/FlareZone/melon-backend/internal/components"
 	"github.com/FlareZone/melon-backend/internal/model"
@@ -22,7 +21,6 @@ func Post() gin.HandlerFunc {
 			response.JsonFail(c, response.BadRequestParams, "post_id not exists")
 			return
 		}
-		fmt.Println("hello world")
 		c.Set(consts.Post, post)
 		c.Next()
 		return
@@ -31,27 +29,28 @@ func Post() gin.HandlerFunc {
 
 func Comment() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		parentID := c.Param("comment_id")
-		if parentID == "" {
+		commentID := c.Param("comment_id")
+		if commentID == "" {
 			response.JsonFail(c, response.BadRequestParams, "comment_id not exists")
 			return
 		}
-		replyComment := service.NewPost(components.DBEngine).QueryCommentByUuid(parentID)
-		if replyComment.ID <= 0 {
+		comment := service.NewPost(components.DBEngine).QueryCommentByUuid(commentID)
+		if comment.ID <= 0 {
 			response.JsonFail(c, response.BadRequestParams, "comment_id not exists")
 			return
 		}
-		parent := new(model.Comment)
-		if replyComment.GetParentID() != "" {
-			parent = service.NewPost(components.DBEngine).QueryCommentByUuid(parent.GetParentID())
+		c.Set(consts.RealComment, comment)
+		postComment := new(model.Comment)
+		if comment.GetParentID() != "" {
+			postComment = service.NewPost(components.DBEngine).QueryCommentByUuid(postComment.GetParentID())
 		} else {
-			parent = replyComment
+			postComment = comment
 		}
-		if parent.ID <= 0 {
+		if postComment.ID <= 0 {
 			response.JsonFail(c, response.BadRequestParams, "comment_id not exists")
 			return
 		}
-		c.Set(consts.PostComment, parent)
+		c.Set(consts.PostComment, postComment)
 		c.Next()
 		return
 	}

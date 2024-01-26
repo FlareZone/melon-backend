@@ -15,3 +15,8 @@ func PostComment(c *gin.Context) *model.Comment {
 	value, _ := c.Get(consts.PostComment)
 	return value.(*model.Comment)
 }
+
+func Comment(c *gin.Context) *model.Comment {
+	value, _ := c.Get(consts.RealComment)
+	return value.(*model.Comment)
+}

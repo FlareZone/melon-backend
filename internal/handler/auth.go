@@ -64,6 +64,7 @@ func (a *AuthHandler) GoogleOauthCallback(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"message": "Failed to get userinfo", "error": err.Error()})
 		return
 	}
+	var actionType = AuthActionLogin.String()
 	user := a.user.FindUserByEmail(googleOauthInfo.Email)
 	if user.UUID == "" {
 		user = googleOauthInfo.User()
@@ -71,6 +72,7 @@ func (a *AuthHandler) GoogleOauthCallback(c *gin.Context) {
 			c.JSON(http.StatusInternalServerError, gin.H{"message": "Failed to get userinfo"})
 			return
 		}
+		actionType = AuthActionRegister.String()
 	}
 
 	jwtToken, err := jwt.Generate(user.UUID)
@@ -82,8 +84,9 @@ func (a *AuthHandler) GoogleOauthCallback(c *gin.Context) {
 	c.SetCookie(consts.JwtCookie, jwtToken, 24*3600, "/", config.App.Domain(), false, true)
 
 	result := map[string]interface{}{
-		"jwt_token":  jwtToken,
-		"expired_at": time.Now().Add(time.Hour * 24).UnixMilli(),
+		"action_type": actionType,
+		"jwt_token":   jwtToken,
+		"expired_at":  time.Now().Add(time.Hour * 24).UnixMilli(),
 	}
 	response.JsonSuccessWithMessage(c, result, "Login successful!")
 	return
@@ -101,6 +104,7 @@ func (a *AuthHandler) EthereumEip712Signature(c *gin.Context) {
 		return
 	}
 	user := a.user.FindUserByEthAddress(ethAddress)
+	var actionType = AuthActionLogin.String()
 	if user.UUID == "" {
 		user = &model.User{
 			EthAddress: &ethAddress,
@@ -113,6 +117,7 @@ func (a *AuthHandler) EthereumEip712Signature(c *gin.Context) {
 			c.JSON(http.StatusInternalServerError, gin.H{"message": "Failed to get userinfo"})
 			return
 		}
+		actionType = AuthActionRegister.String()
 	}
 	jwtToken, err := jwt.Generate(user.UUID)
 	if err != nil {
@@ -121,8 +126,9 @@ func (a *AuthHandler) EthereumEip712Signature(c *gin.Context) {
 	}
 	c.SetCookie(consts.JwtCookie, jwtToken, 24*3600, "/", config.App.Domain(), false, true)
 	result := map[string]interface{}{
-		"jwt_token":  jwtToken,
-		"expired_at": time.Now().Add(time.Hour * 24).UnixMilli(),
+		"action_type": actionType,
+		"jwt_token":   jwtToken,
+		"expired_at":  time.Now().Add(time.Hour * 24).UnixMilli(),
 	}
 	response.JsonSuccessWithMessage(c, result, "Login successful!")
 	return
@@ -170,6 +176,8 @@ func (a *AuthHandler) LoginWithEmail(c *gin.Context) {
 		response.JsonFail(c, response.BadEmailVerificationCode, fmt.Sprintf("email code is invalid"))
 		return
 	}
+
+	var actionType = AuthActionLogin.String()
 	user := a.user.FindUserByEmail(params.Email)
 	if user.UUID == "" {
 		emailVerify := true
@@ -186,6 +194,7 @@ func (a *AuthHandler) LoginWithEmail(c *gin.Context) {
 			response.JsonFail(c, response.StatusInternalServerError, "register fail")
 			return
 		}
+		actionType = AuthActionRegister.String()
 	}
 
 	jwtToken, err := jwt.Generate(user.UUID)
@@ -197,8 +206,9 @@ func (a *AuthHandler) LoginWithEmail(c *gin.Context) {
 	c.SetCookie(consts.JwtCookie, jwtToken, 24*3600, "/", config.App.Domain(), false, true)
 
 	result := map[string]interface{}{
-		"jwt_token":  jwtToken,
-		"expired_at": time.Now().Add(time.Hour * 24).UnixMilli(),
+		"action_type": actionType,
+		"jwt_token":   jwtToken,
+		"expired_at":  time.Now().Add(time.Hour * 24).UnixMilli(),
 	}
 	response.JsonSuccessWithMessage(c, result, "Login successful!")
 	return

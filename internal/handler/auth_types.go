@@ -4,6 +4,17 @@ import (
 	"encoding/hex"
 )
 
+type ActionType string
+
+func (a ActionType) String() string {
+	return string(a)
+}
+
+const (
+	AuthActionLogin    = ActionType("login")
+	AuthActionRegister = ActionType("register")
+)
+
 type EthereumEip712SignatureRequest struct {
 	TypedData     string `json:"typedData" binding:"required,hexString"`
 	TypedDataHash string `json:"typedDataHash" binding:"required,hexString"`

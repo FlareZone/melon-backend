@@ -13,6 +13,7 @@ func Comments(postDetailCommentGroup *gin.RouterGroup) {
 	// 修改评论
 	postDetailCommentGroup.POST("", func(context *gin.Context) {})
 
+	postDetailCommentGroup.PUT("/like", postHandler.CommentLike)
 	// 回复评论
 	postDetailCommentGroup.POST("/reply", postHandler.Reply)
 

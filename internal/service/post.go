@@ -30,6 +30,9 @@ type PostService interface {
 	IsShared(post *model.Post, user *model.User) bool
 	QueryUserPostLikes(user *model.User, postUuidList []string) map[string]bool
 	QueryUserPostShares(user *model.User, postUuidList []string) map[string]bool
+	QueryUserCommentLikes(user *model.User, commentIDList []string) (likes map[string]bool)
+	CommentLike(comment *model.Comment, user *model.User)
+	IsCommentLiked(comment *model.Comment, user *model.User) bool
 }
 
 type Post struct {
@@ -276,6 +279,32 @@ func (p *Post) Posts(userID string, cond builder.Cond, orderBy string, size int)
 	return posts[0:size], posts[size].UUID
 }
 
+func (p *Post) CommentLike(comment *model.Comment, user *model.User) {
+	err := sess.Transaction(p.xorm, func(session *xorm.Session) error {
+		postLike := &model.CommentLike{
+			UserID:    user.UUID,
+			CommentID: comment.UUID,
+			CreatedAt: time.Now().UTC(),
+		}
+		_, err := session.Table(&model.CommentLike{}).Insert(postLike)
+		if err != nil {
+			return err
+		}
+		comment.Likes++
+		_, err = session.Table(&model.Comment{}).ID(comment.ID).Incr("likes", 1).Update(comment)
+		if err != nil {
+			return err
+		}
+		return nil
+	})
+	log.Error("like post comment fail", "user_id", user.UUID, "comment_id", comment.UUID, "err", err)
+}
+
+func (p *Post) IsCommentLiked(comment *model.Comment, user *model.User) bool {
+	exist, _ := p.xorm.Table(&model.CommentLike{}).Where("user_id = ? and comment_id = ?", user.UUID, comment.UUID).Exist()
+	return exist
+}
+
 func (p *Post) Like(post *model.Post, user *model.User) {
 	err := sess.Transaction(p.xorm, func(session *xorm.Session) error {
 		postLike := &model.PostLike{
@@ -298,7 +327,7 @@ func (p *Post) Like(post *model.Post, user *model.User) {
 }
 
 func (p *Post) IsLiked(post *model.Post, user *model.User) bool {
-	exist, _ := p.xorm.Table(&model.PostLike{}).Where("user_id = ? and post_id", user.UUID, post.UUID).Exist()
+	exist, _ := p.xorm.Table(&model.PostLike{}).Where("user_id = ? and post_id = ?", user.UUID, post.UUID).Exist()
 	return exist
 }
 
@@ -312,7 +341,7 @@ func (p *Post) View(post *model.Post) {
 }
 
 func (p *Post) IsShared(post *model.Post, user *model.User) bool {
-	exist, _ := p.xorm.Table(&model.PostShare{}).Where("user_id = ? and post_id", user.UUID, post.UUID).Exist()
+	exist, _ := p.xorm.Table(&model.PostShare{}).Where("user_id = ? and post_id = ?", user.UUID, post.UUID).Exist()
 	return exist
 }
 
@@ -409,6 +438,29 @@ func (p *Post) QueryPostGroupMap(posts []*model.Post) (groups map[string]*model.
 	groups = lo.SliceToMap(rawGroups, func(item *model.Group) (string, *model.Group) {
 		return item.UUID, item
 	})
+	return
+}
+
+func (p *Post) QueryUserCommentLikes(user *model.User, commentIDList []string) (likes map[string]bool) {
+	if len(commentIDList) == 0 {
+		return
+	}
+	likes = make(map[string]bool)
+	for _, commentUuid := range commentIDList {
+		likes[commentUuid] = false
+	}
+	if user.ID <= 0 {
+		return
+	}
+	var queryLikes []*model.CommentLike
+	err := p.xorm.Table(&model.CommentLike{}).Where("user_id = ?", user.UUID).In("comment_id", commentIDList).Find(&queryLikes)
+	if err != nil {
+		log.Error("query comment like fail", "user", user.UUID, "comment_uuid_list", commentIDList, "err", err)
+		return
+	}
+	for _, queryLike := range queryLikes {
+		likes[queryLike.CommentID] = true
+	}
 	return
 }
 
