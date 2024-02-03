@@ -1,4 +1,4 @@
-version: '3'
+version: "3"
 services:
   mariadb:
     restart: always
@@ -7,8 +7,7 @@ services:
     container_name: mariadb
     volumes:
       - ./db:/var/lib/mysql
-    command:
-      --character-set-server=utf8mb4
+    command: --character-set-server=utf8mb4
       --collation-server=utf8mb4_general_ci
       --max_allowed_packet=128M
       --default-time-zone=+8:00

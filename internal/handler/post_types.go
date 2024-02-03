@@ -132,13 +132,14 @@ type CommentResponse struct {
 	Content   string                `json:"content"`
 	Creator   *BaseUserInfoResponse `json:"creator"`
 	Likes     uint                  `json:"likes"`
+	Liked     bool                  `json:"liked"`
 	Comments  uint                  `json:"comments"`
 	Replies   []CommentResponse     `json:"replies"`
 	CreatedAt string                `json:"created_at"`
 	UpdatedAt string                `json:"updated_at"`
 }
 
-func (c *CommentResponse) WithComment(comment *model.Comment, replies []*model.Comment, users map[string]*model.User) *CommentResponse {
+func (c *CommentResponse) WithComment(comment *model.Comment, replies []*model.Comment, users map[string]*model.User, liked map[string]bool) *CommentResponse {
 	replyComments := make([]CommentResponse, 0)
 	for _, reply := range replies {
 		replyComments = append(replyComments, CommentResponse{
@@ -147,6 +148,7 @@ func (c *CommentResponse) WithComment(comment *model.Comment, replies []*model.C
 			ParentID:  reply.GetParentID(),
 			Content:   reply.Content,
 			Likes:     reply.Likes,
+			Liked:     liked[reply.UUID],
 			Comments:  reply.Comments,
 			Creator:   new(BaseUserInfoResponse).WithUser(users[reply.Creator]),
 			Replies:   make([]CommentResponse, 0),
@@ -160,6 +162,7 @@ func (c *CommentResponse) WithComment(comment *model.Comment, replies []*model.C
 		ParentID:  comment.GetParentID(),
 		Content:   comment.Content,
 		Likes:     comment.Likes,
+		Liked:     liked[comment.UUID],
 		Comments:  comment.Comments,
 		Creator:   new(BaseUserInfoResponse).WithUser(users[comment.Creator]),
 		Replies:   replyComments,
@@ -176,10 +179,10 @@ type PostCommentListResponse struct {
 	Comments []*CommentResponse `json:"comments"`
 }
 
-func (p *PostCommentListResponse) WithComments(comments []*model.Comment, replies map[string][]*model.Comment, users map[string]*model.User) *PostCommentListResponse {
+func (p *PostCommentListResponse) WithComments(comments []*model.Comment, replies map[string][]*model.Comment, users map[string]*model.User, liked map[string]bool) *PostCommentListResponse {
 	result := &PostCommentListResponse{Comments: make([]*CommentResponse, 0)}
 	for _, comment := range comments {
-		result.Comments = append(result.Comments, new(CommentResponse).WithComment(comment, replies[comment.UUID], users))
+		result.Comments = append(result.Comments, new(CommentResponse).WithComment(comment, replies[comment.UUID], users, liked))
 	}
 	return result
 }

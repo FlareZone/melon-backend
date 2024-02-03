@@ -99,6 +99,16 @@ func (p *PostHandler) Like(c *gin.Context) {
 	response.JsonSuccess(c, post.Likes)
 }
 
+func (p *PostHandler) CommentLike(c *gin.Context) {
+	comment := ginctx.Comment(c)
+	if p.post.IsCommentLiked(comment, ginctx.AuthUser(c)) {
+		response.JsonSuccess(c, comment.Likes)
+		return
+	}
+	p.post.CommentLike(comment, ginctx.AuthUser(c))
+	response.JsonSuccess(c, comment.Likes)
+}
+
 func (p *PostHandler) View(c *gin.Context) {
 	post := ginctx.Post(c)
 	p.post.View(post)
@@ -130,7 +140,7 @@ func (p *PostHandler) Comment(c *gin.Context) {
 	user := p.user.FindUserByUuid(comment.Creator)
 	response.JsonSuccess(c, new(CommentResponse).WithComment(comment, nil, map[string]*model.User{
 		user.UUID: user,
-	}))
+	}, map[string]bool{comment.UUID: false}))
 }
 
 // Reply  回复评论
@@ -151,7 +161,7 @@ func (p *PostHandler) Reply(c *gin.Context) {
 	user := p.user.FindUserByUuid(comment.Creator)
 	response.JsonSuccess(c, new(CommentResponse).WithComment(comment, nil, map[string]*model.User{
 		user.UUID: user,
-	}))
+	}, map[string]bool{comment.UUID: false}))
 }
 
 // PostComments 查询 post 的评论列表
@@ -164,18 +174,23 @@ func (p *PostHandler) PostComments(c *gin.Context) {
 	replies := p.post.QueryReplies(post, comments)
 
 	creators := make([]string, 0)
+	commentIDList := make([]string, 0)
 	lo.ForEach(comments, func(item *model.Comment, index int) {
 		creators = append(creators, item.Creator)
+		commentIDList = append(commentIDList, item.UUID)
 	})
 	for _, v := range replies {
 		for _, reply := range v {
 			creators = append(creators, reply.Creator)
+			commentIDList = append(commentIDList, reply.UUID)
 		}
 	}
 	creators = lo.Uniq(creators)
 	users := p.user.QueryUserMap(creators)
+	liked := p.post.QueryUserPostLikes(ginctx.AuthUser(c), commentIDList)
+
 	response.JsonSuccess(c, pages.PageResponse{
-		List:   new(PostCommentListResponse).WithComments(comments, replies, users).Comments,
+		List:   new(PostCommentListResponse).WithComments(comments, replies, users, liked).Comments,
 		NextID: nextID,
 	})
 }

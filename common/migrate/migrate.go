@@ -19,8 +19,9 @@ func Schema(dsn string) {
 	}
 	err = engine.Sync(
 		model.User{}, model.UserFollow{},
-		model.Post{}, model.Topic{}, model.PostTopic{}, model.Comment{},
+		model.Post{}, model.Topic{}, model.PostTopic{},
 		model.PostLike{}, model.PostShare{},
+		model.Comment{}, model.CommentLike{},
 		model.Group{}, model.UserGroup{},
 		model.Asset{},
 		model.SigNonce{})

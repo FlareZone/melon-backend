@@ -10,7 +10,4 @@ import (
 func Topics(g *gin.RouterGroup) {
 	topicHandler := handler.NewTopicHandler(service.NewTopic(components.DBEngine))
 	g.POST("", topicHandler.Create)
-	g.POST("/:topic_id", func(context *gin.Context) {
-
-	})
 }

@@ -26,3 +26,14 @@ func (c Comment) GetParentID() string {
 	}
 	return *c.ParentID
 }
+
+type CommentLike struct {
+	ID        uint64    `xorm:"pk autoincr 'id'" json:"id"`
+	UserID    string    `xorm:"char(32) unique(user_id, comment_id) 'user_id'" json:"user_id"`
+	CommentID string    `xorm:"char(32) 'comment_id'" json:"comment_id"`
+	CreatedAt time.Time `xorm:"created_at" json:"created_at"`
+}
+
+func (p CommentLike) TableName() string {
+	return "comment_likes"
+}
