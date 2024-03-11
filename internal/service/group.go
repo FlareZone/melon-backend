@@ -26,9 +26,10 @@ func NewGroup(xorm *xorm.Engine) GroupService {
 }
 
 func (g *Group) QueryUserGroups(user *model.User) (groups []*model.Group) {
+	log.Info("查找用户所属的团队", user)
 	groups = make([]*model.Group, 0)
-	err := g.xorm.Table(&model.Group{}).Join("INNER", "user_groups", "groups.uuid = user_groups.group_id").
-		Select("groups.*").Where("user_groups.user_id = ?", user.UUID).Find(&groups)
+	err := g.xorm.Table(&model.Group{}).Join("INNER", "user_groups", "`groups`.uuid = user_groups.group_id").
+		Select("`groups`.*").Where("user_groups.user_id = ?", user.UUID).Find(&groups)
 	if err != nil {
 		return
 	}

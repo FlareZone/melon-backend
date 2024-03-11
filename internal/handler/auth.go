@@ -33,16 +33,42 @@ func NewAuthHandler(user service.UserService, sigNonce service.SigNonceService) 
 	return &AuthHandler{user: user, sigNonce: sigNonce, verificationCode: service.NewVerificationCode()}
 }
 
+// 根据邮箱直接登陆
+func (a *AuthHandler) SimpleOauthHandler(c *gin.Context) {
+	email := c.Query("email")
+	user := a.user.FindUserByEmail(email)
+	jwtToken, _ := jwt.Generate(user.UUID)
+	c.SetCookie(consts.JwtCookie, jwtToken, 24*3600, "/", config.App.Domain(), false, true)
+
+	result := map[string]interface{}{
+		"action_type": AuthActionLogin.String(),
+		"jwt_token":   jwtToken,
+		"expired_at":  time.Now().Add(time.Hour * 24).UnixMilli(),
+	}
+	response.JsonSuccessWithMessage(c, result, "Login successful!")
+	return
+}
+
 func (a *AuthHandler) GoogleOauthCallback(c *gin.Context) {
+
+	log.Info("进入GoogleOauthCallback")
+
 	code := c.Query("code")
+
+	log.Info("授权码", code)
+	//使用授权码换取token
 	token, err := config.GoogleOauthCfg.Exchange(c, code)
+
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"message": "Failed to exchange token", "error": err.Error()})
 		return
+	} else {
+		log.Info("token", token)
 	}
 	// To retrieve user's information from Google's UserInfo endpoint
 	client := config.GoogleOauthCfg.Client(c, token)
 	userinfo, err := client.Get("https://www.googleapis.com/oauth2/v3/userinfo")
+	log.Info("userinfo", userinfo)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"message": "Failed to get userinfo", "error": err.Error()})
 		return

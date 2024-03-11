@@ -15,8 +15,8 @@ jwt:
   issuer: melon
 oauth_v2:
   google:
-    client_id: 1040191110882-eu1pov0cr15tk19dqfic4tf7o39414ud.apps.googleusercontent.com
-    client_secret: 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
+    client_id:
+    client_secret: 
     redirect_url: http://localhost:8080/auth/google/callback
 eip712:
   chain_id: 1

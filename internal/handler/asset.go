@@ -13,7 +13,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/inconshreveable/log15"
 	"net/http"
-	"strings"
 	"time"
 )
 
@@ -44,7 +43,10 @@ func (o *AssetHandler) OssPolicy(c *gin.Context) {
 		return
 	}
 	assetID := uuid.Uuid()
-	cosPath := fmt.Sprintf(`%s/%s/%s.%s`, params.Storage, time.Now().Format("200601"), assetID, params.Ext)
+	// 构建存储路径（文件命名不能包含/）
+	//cosPath := fmt.Sprintf(`%s/%s/%s.%s`, params.Storage, time.Now().Format("200601"), assetID, params.Ext)
+	cosPath := fmt.Sprintf(`%s-%s-%s.%s`, params.Storage, time.Now().Format("200601"), assetID, params.Ext)
+
 	// 构建Policy文档
 	policy := map[string]interface{}{
 		"expiration": time.Now().Add(time.Minute * 5).UTC().Format("2006-01-02T15:04:05Z"),
@@ -53,6 +55,7 @@ func (o *AssetHandler) OssPolicy(c *gin.Context) {
 			[]interface{}{"in", "$content-type", []interface{}{"image/jpg", "image/png"}},
 		},
 	}
+	//将数据结构序列化为JSON格式的字节切片
 	policyBytes, err := json.Marshal(policy)
 	if err != nil {
 		c.AbortWithStatus(http.StatusInternalServerError)
@@ -73,27 +76,49 @@ func (o *AssetHandler) OssPolicy(c *gin.Context) {
 	})
 }
 
+// 根据图片的UUID打开图片
 func (o *AssetHandler) Asset(c *gin.Context) {
+	log.Info("asset", "asset", c.Param("uuid"))
+	// 查询图片是否存在
 	asset := o.svc.QueryByUuid(c.Param("uuid"))
 	if asset.ID <= 0 {
 		c.AbortWithStatus(http.StatusNotFound)
 		return
+	} else {
+		log.Info("asset", "asset", asset)
 	}
+	// 判断存储空间是否存在。
+	isExist, err := o.aliYunClient.IsBucketExist(config.AliyunOSS.BucketName)
+	if err != nil {
+		log.Error("get aliyun bucket fail", "err", err)
+	} else {
+		log.Info("get aliyun bucket success", "bucket isExist", isExist)
+	}
+	// 获取阿里云OSS对象
 	bucket, err := o.aliYunClient.Bucket(config.AliyunOSS.BucketName)
 	if err != nil {
 		log.Error("get aliyun bucket fail", "err", err)
 		c.AbortWithStatus(http.StatusNotFound)
 		return
+	} else {
+		log.Info("get aliyun bucket success", "bucket", bucket.BucketName)
 	}
 	signedURL, err := bucket.SignURL(asset.CosPath, oss.HTTPGet, int64(time.Now().Add(time.Minute*5).Sub(time.Now()).Seconds()))
+
 	if err != nil {
 		log.Error("get aliyun sign url fail", "err", err)
 		c.AbortWithStatus(http.StatusNotFound)
 		return
 	}
-	signedURL = strings.ReplaceAll(signedURL,
-		fmt.Sprintf("%s.%s", config.AliyunOSS.BucketName,
-			config.AliyunOSS.Endpoint), config.AliyunOSS.SelfDomain)
+	//使用签名URL临时授权
+	//https://help.aliyun.com/zh/oss/developer-reference/authorize-access-5?spm=a2c4g.11186623.0.i12#concept-59670-zh
+	//把其中的默认域名（BucketName.Endpoint）换成自定义域名
+	//signedURL = strings.ReplaceAll(signedURL,
+	//	fmt.Sprintf("%s.%s", config.AliyunOSS.BucketName,
+	//		config.AliyunOSS.Endpoint), config.AliyunOSS.SelfDomain)
+
+	log.Info("get aliyun sign url success", "url", signedURL)
+
 	c.Redirect(302, signedURL)
 	return
 }

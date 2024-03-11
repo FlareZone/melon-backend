@@ -12,6 +12,7 @@ import (
 func Group() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		groupID := c.Param("group_id")
+		//创建group时，group_id为空
 		if groupID == "" {
 			c.Next()
 			return

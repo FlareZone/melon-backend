@@ -11,6 +11,7 @@ import (
 func Groups(g *gin.RouterGroup) {
 	// 创建 group
 	groupHandler := handler.NewGroupHandler(service.NewGroup(components.DBEngine))
+	//查询当前用户所属的group
 	g.GET("", groupHandler.Groups)
 	g.POST("", groupHandler.Create)
 	// 查询 group info

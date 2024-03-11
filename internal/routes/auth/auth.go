@@ -20,9 +20,13 @@ func Auth(authGroup *gin.RouterGroup) {
 	authHandler := handler.NewAuthHandler(service.NewUser(components.DBEngine), service.NewNonce(components.DBEngine))
 	// google 登录
 	authGroup.GET("/google/login", func(c *gin.Context) {
+		location := config.GoogleOauthCfg.AuthCodeURL("state", oauth2.AccessTypeOffline)
+		log.Info("AuthCodeURL:=======>", location)
 		c.Redirect(http.StatusTemporaryRedirect,
-			config.GoogleOauthCfg.AuthCodeURL("state", oauth2.AccessTypeOffline))
+			location)
 	})
+	//简单登陆
+	authGroup.GET("/simple/login", authHandler.SimpleOauthHandler)
 	// google 登录回调
 	authGroup.GET("/google/callback", authHandler.GoogleOauthCallback)
 
