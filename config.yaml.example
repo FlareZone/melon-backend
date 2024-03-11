@@ -25,11 +25,11 @@ eip712:
   verifying_Contract: 0xdAC17F958D2ee523a2206206994597C13D831ec7
 oss:
   aliyun:
-    endpoint: oss-cn-beijing.aliyuncs.com
-    accessKeyId: LTAI5tBjJBQ342kGn3vurjNc
-    accessKeySecret: oxOslaPaoLv1BdD4WNilDUglB66ExR
-    bucketName: ossssssssd
-    selfDomain: melon-file.taozhang.net.cn
+    endpoint: 
+    accessKeyId:
+    accessKeySecret:
+    bucketName:
+    selfDomain:
 mail:
   google:
     password:
