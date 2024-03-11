@@ -1,18 +1,36 @@
 app_name: melon
+app_url: http://localhost:8080
 log_level: INFO
 database:
   melon:
-    dsn: ${your mysql username}:${your mysql password}@tcp(${your mysql host}:${your mysql host port})/${your mysql database}?parseTime=true
+    logging: true
+    dsn: root:root@tcp(localhost:3306)/melon-dev?parseTime=true
+redis:
+  melon:
+    addr: localhost:6379
+    password: ""
+    DB: 0
 jwt:
-  secret: ${your jwt secret}
+  secret: f7&vh@VHuU0XpXZLm6wT2*HlYpPG#j0G3Tzsi!Qwsk#fY9+gF43g8Eu
   issuer: melon
 oauth_v2:
   google:
-    client_id: ${google oauth client id}
-    client_secret: ${google oauth client secret}
-    redirect_url: ${google oauth redirect}
+    client_id: 1040191110882-eu1pov0cr15tk19dqfic4tf7o39414ud.apps.googleusercontent.com
+    client_secret: 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
+    redirect_url: http://localhost:8080/auth/google/callback
 eip712:
   chain_id: 1
   version: 1
   name: melon
   verifying_Contract: 0xdAC17F958D2ee523a2206206994597C13D831ec7
+oss:
+  aliyun:
+    endpoint: oss-cn-beijing.aliyuncs.com
+    accessKeyId: LTAI5tBjJBQ342kGn3vurjNc
+    accessKeySecret: oxOslaPaoLv1BdD4WNilDUglB66ExR
+    bucketName: ossssssssd
+    selfDomain: melon-file.taozhang.net.cn
+mail:
+  google:
+    password:
+    sender:
