@@ -25,7 +25,7 @@ eip712:
   verifying_Contract: 0xdAC17F958D2ee523a2206206994597C13D831ec7
 oss:
   aliyun:
-    endpoint: 
+    endpoint:
     accessKeyId:
     accessKeySecret:
     bucketName:
