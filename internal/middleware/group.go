@@ -20,15 +20,19 @@ func Group() gin.HandlerFunc {
 		group := service.NewGroup(components.DBEngine).FindByGroupID(groupID)
 		// 用户访问不存在的group，显示无权限
 		if group.ID == 0 {
-			response.JsonFail(c, response.StatusUnauthorized, "Unauthorized")
+			response.JsonFail(c, response.StatusUnauthorized, "Non-existent group")
 			return
 		}
 		// 群组是加密的，且用户不在group组中，则提示无权限
 		if group.IsPrivate && !service.NewGroup(components.DBEngine).HasUser(group, ginctx.AuthUserID(c)) {
-			response.JsonFail(c, response.StatusUnauthorized, "Unauthorized")
+			response.JsonFail(c, response.StatusUnauthorized, "The group is encrypted and the user is not in the group group")
 			return
 		}
+		log.Info("=================group middleware=========")
+		log.Info("存入group", group.Name)
 		c.Set(consts.AuthGroup, group)
+		value, ok := c.Get(consts.AuthGroup)
+		log.Debug("查询有无auth group", "ok", ok, "value", value)
 		c.Next()
 		return
 	}

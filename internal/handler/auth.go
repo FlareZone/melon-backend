@@ -36,7 +36,9 @@ func NewAuthHandler(user service.UserService, sigNonce service.SigNonceService) 
 // 根据邮箱直接登陆
 func (a *AuthHandler) SimpleOauthHandler(c *gin.Context) {
 	email := c.Query("email")
+	//email_verify必须是true，才能查出来
 	user := a.user.FindUserByEmail(email)
+	log.Info("简单登录--------user", user.UUID)
 	jwtToken, _ := jwt.Generate(user.UUID)
 	c.SetCookie(consts.JwtCookie, jwtToken, 24*3600, "/", config.App.Domain(), false, true)
 

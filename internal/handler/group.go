@@ -62,11 +62,11 @@ func (g *GroupHandler) AddUser(c *gin.Context) {
 	}
 	group := ginctx.AuthGroup(c)
 	if g.group.HasUser(group, groupUserAddParams.UserID) {
-		response.JsonSuccess(c, nil)
+		response.JsonSuccessWithMessage(c, groupUserAddParams, "user is exists")
 		return
 	}
 	if g.group.AddUser(group, groupUserAddParams.UserID) {
-		response.JsonSuccess(c, nil)
+		response.JsonSuccessWithMessage(c, groupUserAddParams, "user is added")
 		return
 	}
 	response.JsonFail(c, response.StatusInternalServerError, "add user to group fail")

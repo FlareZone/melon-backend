@@ -16,7 +16,7 @@ func Groups(g *gin.RouterGroup) {
 	g.POST("", groupHandler.Create)
 	// 查询 group info
 	g.GET("/:group_id", groupHandler.Detail)
-	// 编辑group
+	// 编辑group(开发中)
 	g.POST("/:group_id", func(context *gin.Context) {
 
 	})

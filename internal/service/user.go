@@ -52,6 +52,16 @@ func (u *User) IsFollowed(user, queryUser *model.User) bool {
 
 // FollowUser 关注用户
 func (u *User) FollowUser(user *model.User, follower *model.User) bool {
+	//判断是否关注的是自己
+	if user.UUID == follower.UUID {
+		log.Error("Unable to focus on oneself")
+		return false
+	}
+	//判断是否已经关注
+	if u.IsFollower(user, follower) {
+		log.Warn("Already following")
+		return false
+	}
 	userFollow := &model.UserFollow{
 		UserID:     user.UUID,
 		FollowerID: follower.UUID,
@@ -66,12 +76,14 @@ func (u *User) FollowUser(user *model.User, follower *model.User) bool {
 func (u *User) QueryFollowerUsers(uuid string) (users []*model.User) {
 	users = make([]*model.User, 0)
 	userFollowers := make([]*model.UserFollow, 0)
+	//查出关注列表
 	err := u.xorm.Table(&model.UserFollow{}).Where("user_id = ?", uuid).Find(&userFollowers)
 	if err != nil {
 		log.Error("query following user fail", "uuid", uuid, "err", err)
 		return
 	}
 	var uuids []string
+	//查出关注列表的用户信息
 	for _, userFollower := range userFollowers {
 		uuids = append(uuids, userFollower.FollowerID)
 	}
