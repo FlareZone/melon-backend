@@ -17,6 +17,7 @@ type PageResponse struct {
 	NextID string      `json:"next_id"`
 }
 
+// 根据参数的前面是+或者-来判断排序
 func BuildPostListOrders(current *model.Post, orderParam string) (cond builder.Cond, orderBy string) {
 	orderArr := strings.Split(orderParam, ",")
 	if len(orderArr) == 0 {

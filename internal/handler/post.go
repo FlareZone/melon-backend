@@ -28,11 +28,15 @@ func (p *PostHandler) CreatePost(c *gin.Context) {
 		response.JsonFail(c, response.BadRequestParams, err.Error())
 		return
 	}
+	curUserId := ginctx.AuthUserID(c)
+	//没有经过中间件group的set，为nil
+	curGroup := ginctx.AuthGroup(c)
+
 	post := p.post.Create(params.Title, params.Content,
-		ginctx.AuthUserID(c),
+		curUserId,
 		params.Images,
 		params.Topics,
-		ginctx.AuthGroup(c))
+		curGroup)
 	if post.ID <= 0 {
 		response.JsonFail(c, response.PostFailed, "create fail")
 		return
@@ -70,19 +74,30 @@ func (p *PostHandler) ListPosts(c *gin.Context) {
 		post    = p.post.QueryPostByUuid(nextID)
 	)
 	whereCond, orderBy := pages.BuildPostListOrders(post, orders)
+
+	log.Debug("print whereCond:", "whereCond:", whereCond)
+	log.Debug("print orderBy:", "orderBy:", orderBy)
+
 	posts, nextID := p.post.Posts(ginctx.AuthUserID(c), whereCond, orderBy, int(size))
 	if len(posts) == 0 {
 		response.JsonSuccess(c, pages.PageResponse{List: make([]*PostResponse, 0), NextID: nextID})
 		return
 	}
+	//取出其中的帖子作者
 	creators := lo.Keys(lo.SliceToMap(posts, func(item *model.Post) (string, *model.Post) {
 		return item.Creator, item
 	}))
+	//取出帖子的uuid
 	postUuidList := lo.Keys(lo.SliceToMap(posts, func(item *model.Post) (string, *model.Post) {
 		return item.UUID, item
 	}))
+
 	likes := p.post.QueryUserPostLikes(ginctx.AuthUser(c), postUuidList)
+	log.Debug("print likes:", "likes:", likes)
+
 	shares := p.post.QueryUserPostShares(ginctx.AuthUser(c), postUuidList)
+	log.Debug("print shares:", "shares:", shares)
+
 	withPosts := new(PostListResponse).
 		WithPosts(posts, p.user.FindUsersByUuid(creators), p.post.QueryPostGroupMap(posts)).WithLikes(likes).WithShares(shares)
 	response.JsonSuccess(c, pages.PageResponse{List: withPosts.List, NextID: nextID})
@@ -94,7 +109,6 @@ func (p *PostHandler) Like(c *gin.Context) {
 		response.JsonSuccess(c, post.Likes)
 		return
 	}
-
 	p.post.Like(post, ginctx.AuthUser(c))
 	response.JsonSuccess(c, post.Likes)
 }
@@ -171,14 +185,17 @@ func (p *PostHandler) PostComments(c *gin.Context) {
 	comment := p.post.QueryCommentByUuid(nextID)
 	post := ginctx.Post(c)
 	comments, nextID := p.post.QueryComments(post, comment, int(size))
+	//key: 父评论id value: 评论
 	replies := p.post.QueryReplies(post, comments)
 
 	creators := make([]string, 0)
 	commentIDList := make([]string, 0)
+	//取出其中的评论作者，uuid
 	lo.ForEach(comments, func(item *model.Comment, index int) {
 		creators = append(creators, item.Creator)
 		commentIDList = append(commentIDList, item.UUID)
 	})
+	//取出其中的子评论作者，uuid
 	for _, v := range replies {
 		for _, reply := range v {
 			creators = append(creators, reply.Creator)

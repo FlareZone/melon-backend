@@ -6,7 +6,7 @@ import (
 	"github.com/FlareZone/melon-backend/internal/handler"
 	"github.com/FlareZone/melon-backend/internal/middleware"
 	"github.com/FlareZone/melon-backend/internal/routes/auth"
-	"github.com/FlareZone/melon-backend/internal/routes/v1"
+	v1 "github.com/FlareZone/melon-backend/internal/routes/v1"
 	"github.com/FlareZone/melon-backend/internal/routes/v1/asset"
 	"github.com/FlareZone/melon-backend/internal/service"
 	"github.com/gin-gonic/gin"
@@ -39,6 +39,7 @@ func NoLoginJwt(r *gin.Engine) {
 }
 
 func Route(r *gin.Engine) {
+
 	Web(r)
 	r.Use(middleware.Cors())
 	authGroup := r.Group("/auth")

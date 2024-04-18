@@ -16,6 +16,7 @@ func AuthUserID(c *gin.Context) string {
 
 func AuthUser(c *gin.Context) *model.User {
 	value, ok := c.Get(consts.AuthUser)
+
 	if !ok {
 		return new(model.User)
 	}

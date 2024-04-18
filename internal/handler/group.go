@@ -21,7 +21,10 @@ func NewGroupHandler(group service.GroupService) *GroupHandler {
 
 func (g *GroupHandler) Groups(c *gin.Context) {
 	user := ginctx.AuthUser(c)
+	log.Info("当前用户---》", user.UUID)
 	groups := g.group.QueryUserGroups(user)
+	//SliceToMap，group的创建者作为key，把group作为value
+	//Keys 把创建者的uuid变成数组
 	creators := lo.Keys(lo.SliceToMap(groups, func(item *model.Group) (string, *model.Group) {
 		return item.Creator, item
 	}))
@@ -35,6 +38,7 @@ func (g *GroupHandler) Create(c *gin.Context) {
 		response.JsonFail(c, response.BadRequestParams, err.Error())
 		return
 	}
+	// 检查是否已经存在
 	group := g.group.QueryGroupByName(params.Name)
 	if group.ID > 0 {
 		response.JsonFail(c, response.BadRequestParams, "group is exists")
@@ -58,11 +62,11 @@ func (g *GroupHandler) AddUser(c *gin.Context) {
 	}
 	group := ginctx.AuthGroup(c)
 	if g.group.HasUser(group, groupUserAddParams.UserID) {
-		response.JsonSuccess(c, nil)
+		response.JsonSuccessWithMessage(c, groupUserAddParams, "user is exists")
 		return
 	}
 	if g.group.AddUser(group, groupUserAddParams.UserID) {
-		response.JsonSuccess(c, nil)
+		response.JsonSuccessWithMessage(c, groupUserAddParams, "user is added")
 		return
 	}
 	response.JsonFail(c, response.StatusInternalServerError, "add user to group fail")
