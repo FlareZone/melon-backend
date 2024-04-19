@@ -18,8 +18,11 @@ var (
 
 func Jwt() gin.HandlerFunc {
 	return func(c *gin.Context) {
+		log.Info("======================jwt middleware=================")
 		// 从请求头中提取JWT token
 		jwtToken := c.GetHeader(consts.JwtAuthorization)
+		log.Info("jwt token", "jwt", jwtToken)
+		//去掉Bearer
 		if strings.HasPrefix(jwtToken, consts.JwtBearer) {
 			jwtToken = strings.TrimPrefix(jwtToken, consts.JwtBearer)
 		}
@@ -32,12 +35,16 @@ func Jwt() gin.HandlerFunc {
 			log.Error("jwt token parse fail", "jwt", jwtToken, "err", err)
 			c.AbortWithStatus(http.StatusUnauthorized)
 			return
+		} else {
+			log.Info("jwt token parse success", "jwt", userID)
 		}
 		user := service.NewUser(components.DBEngine).FindUserByUuid(userID)
 		if user.ID <= 0 {
 			log.Error("user not found", "jwt", jwtToken, "err", err)
 			c.AbortWithStatus(http.StatusUnauthorized)
 			return
+		} else {
+			log.Info("user found", "jwt", userID)
 		}
 		c.Set(consts.AuthUser, user)
 		c.Set(consts.JwtUserID, userID)

@@ -1,4 +1,4 @@
-package handler
+package _type
 
 import (
 	"encoding/json"
@@ -107,6 +107,7 @@ func (p *PostListResponse) WithPosts(posts []*model.Post, users []*model.User, g
 	return result
 }
 
+// 根据传入查询的结果，来给返回的列表中的每个post添加是否被点赞
 func (p *PostListResponse) WithLikes(likes map[string]bool) *PostListResponse {
 	for idx := range p.List {
 		p.List[idx].WithLiked(likes[p.List[idx].UUID])

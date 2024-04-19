@@ -1,4 +1,4 @@
-package handler
+package _type
 
 import (
 	_ "embed"
@@ -15,11 +15,11 @@ type Banner struct {
 }
 
 var (
-	banners []*Banner
+	Banners []*Banner
 )
 
 func init() {
-	_ = json.Unmarshal(bannerBytes, &banners)
+	_ = json.Unmarshal(bannerBytes, &Banners)
 }
 
 type BannerListResponse struct {

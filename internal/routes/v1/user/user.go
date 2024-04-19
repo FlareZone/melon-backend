@@ -9,7 +9,7 @@ import (
 
 func User(r *gin.RouterGroup) {
 	userHandler := handler.NewUserHandler(service.NewUser(components.DBEngine))
-	r.GET("/info", userHandler.Info)
+	r.GET("/", userHandler.Info)
 	r.POST("/edit", userHandler.EditProfile)
 	r.GET("/query/:uuid/info", userHandler.QueryUserInfo)
 	r.POST("/following/:uuid", userHandler.Following)

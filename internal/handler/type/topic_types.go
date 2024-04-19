@@ -1,4 +1,4 @@
-package handler
+package _type
 
 type TopicCreateParamRequest struct {
 	Name string `json:"name" binding:"required,max=256"`

@@ -1,4 +1,4 @@
-package handler
+package _type
 
 type AliyunOssRequest struct {
 	Storage string `json:"storage" binding:"required,ossStorage"`

@@ -2,6 +2,7 @@ package service
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/FlareZone/melon-backend/common/uuid"
 	"github.com/FlareZone/melon-backend/internal/model"
 	"github.com/FlareZone/melon-backend/internal/service/sess"
@@ -72,6 +73,7 @@ func (p *Post) Create(title, content, creator string, images, topics []string, g
 	session := p.xorm.NewSession()
 	session.Begin()
 	defer session.Close()
+	//团队发表了一篇文章，团队文章数+1
 	if group.ID > 0 {
 		group.Posts++
 		_, err := session.Table(&model.Group{}).ID(group.ID).Incr("posts", 1).Update(group)
@@ -80,11 +82,13 @@ func (p *Post) Create(title, content, creator string, images, topics []string, g
 			return
 		}
 	}
+	//插入新文章
 	_, err := session.Table(&model.Post{}).Insert(post)
 	if err != nil {
 		log.Error("insert post fail", "title", title, "creator", creator, "err", err)
 		return
 	}
+	//插入文章标签
 	_, err = session.Table(&model.PostTopic{}).InsertMulti(&postTopics)
 	if err != nil {
 		log.Error("insert post topics fail", "title", title, "creator", creator, "err", err)
@@ -98,12 +102,21 @@ func (p *Post) Create(title, content, creator string, images, topics []string, g
 }
 
 func (p *Post) Edit(post *model.Post, title, content string, images, topics []string) {
+
+	localTime := time.Now()
+	fmt.Println("本地时间:", localTime)
+
+	// 获取UTC时间
+	utcTime := time.Now().UTC()
+	fmt.Println("UTC时间:", utcTime)
+
 	post.Title = title
 	post.Content = content
 	marshal, _ := json.Marshal(images)
 	post.Images = string(marshal)
 	now := time.Now().UTC()
 	postTopics := make([]model.PostTopic, 0)
+	post.UpdatedAt = now
 	for _, topic := range topics {
 		postTopics = append(postTopics, model.PostTopic{
 			UUID:      uuid.Uuid(),
@@ -116,21 +129,32 @@ func (p *Post) Edit(post *model.Post, title, content string, images, topics []st
 	session := p.xorm.NewSession()
 	session.Begin()
 	defer session.Close()
-	_, err := session.Table(&model.PostTopic{}).Where("post_id = ?", post.UUID).Delete()
+
+	// 检查是否存在具有给定 UUID 的记录
+	exist, err := session.Table(&model.Post{}).Where("uuid = ?", post.UUID).Exist(&model.Post{})
 	if err != nil {
-		log.Error("delete post topics fail", "post_id", post.UUID, "err", err)
+		log.Error("Post does not exist", "err", err)
 		return
 	}
-	_, err = session.Table(&model.Post{}).Update(post)
-	if err != nil {
-		log.Error("insert post fail", "title", title, "post_id", post.UUID, "err", err)
-		return
+	if exist {
+		//删除文章标签
+		_, err := session.Table(&model.PostTopic{}).Where("post_id = ?", post.UUID).Delete()
+		if err != nil {
+			log.Error("delete post topics fail", "post_id", post.UUID, "err", err)
+			return
+		}
+		_, err = session.Table(&model.Post{}).Where("uuid = ?", post.UUID).Update(post)
+		if err != nil {
+			log.Error("insert post fail", "title", title, "post_id", post.UUID, "err", err)
+			return
+		}
+		_, err = session.Table(&model.PostTopic{}).InsertMulti(&postTopics)
+		if err != nil {
+			log.Error("edit post topics fail", "title", title, "post_id", post.UUID, "err", err)
+			return
+		}
 	}
-	_, err = session.Table(&model.PostTopic{}).InsertMulti(&postTopics)
-	if err != nil {
-		log.Error("edit post topics fail", "title", title, "post_id", post.UUID, "err", err)
-		return
-	}
+
 	if err = session.Commit(); err != nil {
 		log.Error("edit post fail", "post_id", post.UUID, "err", err)
 	}
@@ -158,6 +182,7 @@ func (p *Post) QueryCommentByUuid(uuid string) (comment *model.Comment) {
 func (p *Post) Comment(post *model.Post, content, creator string) (comment *model.Comment) {
 	comment = new(model.Comment)
 	if post.ID == 0 {
+		log.Error("post does not exist")
 		return
 	}
 	now := time.Now().UTC()
@@ -206,18 +231,21 @@ func (p *Post) Reply(post *model.Post, parentComment *model.Comment, content, cr
 	session := p.xorm.NewSession()
 	session.Begin()
 	defer session.Close()
+	//给被评论的帖子增加评论数
 	post.Comments++
 	_, err := session.Table(&model.Post{}).ID(post.ID).Incr("comments", 1).Update(post)
 	if err != nil {
 		log.Error("update post fail", "post_id", post.UUID, "err", err)
 		return
 	}
+	//给被回复的评论加上回复数
 	parentComment.Comments++
 	_, err = session.Table(&model.Comment{}).ID(parentComment.ID).Incr("comments", 1).Update(parentComment)
 	if err != nil {
 		log.Error("update parent comment fail", "post_id", post.UUID, "parent_comment_id", parentComment.UUID, "err", err)
 		return
 	}
+	//插入评论
 	_, err = p.xorm.Table(&model.Comment{}).Insert(comment)
 	if err != nil {
 		log.Error("insert comment fail", "post_id", post.UUID, "creator", creator, "err", err)
@@ -237,6 +265,7 @@ func (p *Post) Posts(userID string, cond builder.Cond, orderBy string, size int)
 		where = where.And(cond)
 	}
 	if userID == "" {
+		//根据帖子是否有团队判断
 		where = where.And(builder.And(
 			builder.IsNull{"posts.group_id"}).
 			Or(builder.And(builder.NotNull{"posts.group_id"}).And(
@@ -247,9 +276,9 @@ func (p *Post) Posts(userID string, cond builder.Cond, orderBy string, size int)
 			builder.And(
 				builder.NotNull{"posts.group_id"},
 				builder.Or(
-					builder.Eq{"groups.is_private": false},
+					builder.Eq{"`groups`.is_private": false},
 					builder.And(
-						builder.Eq{"groups.is_private": true},
+						builder.Eq{"`groups`.is_private": true},
 						builder.Eq{"user_groups.user_id": userID},
 					),
 				),
@@ -258,8 +287,8 @@ func (p *Post) Posts(userID string, cond builder.Cond, orderBy string, size int)
 	}
 	sql, args, err := builder.MySQL().Select("posts.*").
 		From("posts").
-		Join("LEFT", "groups", "posts.group_id = groups.uuid").
-		Join("LEFT", "user_groups", "groups.uuid = user_groups.group_id").
+		Join("LEFT", "`groups`", "posts.group_id = `groups`.uuid").
+		Join("LEFT", "user_groups", "`groups`.uuid = user_groups.group_id").
 		Where(where).
 		OrderBy(orderBy).
 		Limit(int(size) + 1).
@@ -297,7 +326,9 @@ func (p *Post) CommentLike(comment *model.Comment, user *model.User) {
 		}
 		return nil
 	})
-	log.Error("like post comment fail", "user_id", user.UUID, "comment_id", comment.UUID, "err", err)
+	if err != nil {
+		log.Error("like post comment fail", "user_id", user.UUID, "comment_id", comment.UUID, "err", err)
+	}
 }
 
 func (p *Post) IsCommentLiked(comment *model.Comment, user *model.User) bool {
@@ -323,7 +354,9 @@ func (p *Post) Like(post *model.Post, user *model.User) {
 		}
 		return nil
 	})
-	log.Error("like post fail", "user_id", user.UUID, "post_id", post.UUID, "err", err)
+	if err != nil {
+		log.Error("like post fail", "user_id", user.UUID, "post_id", post.UUID, "err", err)
+	}
 }
 
 func (p *Post) IsLiked(post *model.Post, user *model.User) bool {
@@ -333,7 +366,7 @@ func (p *Post) IsLiked(post *model.Post, user *model.User) bool {
 
 func (p *Post) View(post *model.Post) {
 	post.Views++
-	_, err := p.xorm.Table(&model.Post{}).ID(post.ID).Incr("views", 1).Update(post)
+	_, err := p.xorm.Table(&model.Post{}).ID(post.ID).Incr("views", 1).Update(&model.Post{})
 	if err != nil {
 		log.Error("update post view fail", "post_id", post.UUID, "err", err)
 		return
@@ -393,6 +426,7 @@ func (p *Post) QueryComments(post *model.Post, currentComment *model.Comment, si
 	return comments[0:size], comments[size].UUID
 }
 
+// 填充每个评论的子评论
 func (p *Post) QueryReplies(post *model.Post, comments []*model.Comment) (replies map[string][]*model.Comment) {
 	replies = make(map[string][]*model.Comment)
 	if len(comments) == 0 {
@@ -487,6 +521,7 @@ func (p *Post) QueryUserPostShares(user *model.User, postUuidList []string) (sha
 	return
 }
 
+// 查询帖子列表中，当前用户点赞的情况
 func (p *Post) QueryUserPostLikes(user *model.User, postUuidList []string) (likes map[string]bool) {
 	if len(postUuidList) == 0 {
 		return

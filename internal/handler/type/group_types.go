@@ -1,4 +1,4 @@
-package handler
+package _type
 
 import (
 	"github.com/FlareZone/melon-backend/internal/model"

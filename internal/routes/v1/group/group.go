@@ -11,11 +11,12 @@ import (
 func Groups(g *gin.RouterGroup) {
 	// 创建 group
 	groupHandler := handler.NewGroupHandler(service.NewGroup(components.DBEngine))
+	//查询当前用户所属的group
 	g.GET("", groupHandler.Groups)
 	g.POST("", groupHandler.Create)
 	// 查询 group info
 	g.GET("/:group_id", groupHandler.Detail)
-	// 编辑group
+	// 编辑group(开发中)
 	g.POST("/:group_id", func(context *gin.Context) {
 
 	})
