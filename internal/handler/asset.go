@@ -7,6 +7,7 @@ import (
 	"github.com/FlareZone/melon-backend/common/signature"
 	"github.com/FlareZone/melon-backend/common/uuid"
 	"github.com/FlareZone/melon-backend/config"
+	"github.com/FlareZone/melon-backend/internal/handler/type"
 	"github.com/FlareZone/melon-backend/internal/response"
 	"github.com/FlareZone/melon-backend/internal/service"
 	"github.com/aliyun/aliyun-oss-go-sdk/oss"
@@ -37,7 +38,7 @@ func NewAssetHandler(svc service.AssetService) *AssetHandler {
 // OssPolicy https://help.aliyun.com/zh/oss/developer-reference/postobject#section-d5z-1ww-wdb
 // 需要绑定自定义域名： https://help.aliyun.com/zh/oss/user-guide/map-custom-domain-names-5
 func (o *AssetHandler) OssPolicy(c *gin.Context) {
-	var params AliyunOssRequest
+	var params _type.AliyunOssRequest
 	if err := c.BindJSON(&params); err != nil {
 		response.JsonFail(c, response.BadRequestParams, err.Error())
 		return

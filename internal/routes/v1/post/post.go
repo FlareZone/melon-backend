@@ -43,10 +43,13 @@ func Detail(postDetailGroup *gin.RouterGroup) {
 
 func Posts(postGroup *gin.RouterGroup) {
 	postHandler := handler.NewPostHandler(service.NewPost(components.DBEngine), service.NewUser(components.DBEngine))
+
+	postGroup.GET("", middleware.NoLoginJwt(), postHandler.ListPosts)
+	postGroup.GET("/:post_id/comments", middleware.NoLoginJwt(), middleware.Post(), postHandler.PostComments)
 	// 发表Post
-	postGroup.POST("", postHandler.CreatePost)
-	postDetailGroup := postGroup.Group("/:post_id")
-	postDetailGroup.Use(middleware.Post())
+	postGroup.POST("", middleware.Jwt(), postHandler.CreatePost)
+
+	postDetailGroup := postGroup.Group("/:post_id", middleware.Jwt(), middleware.Post())
 	{
 		Detail(postDetailGroup)
 	}

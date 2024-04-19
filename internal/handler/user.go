@@ -2,6 +2,7 @@ package handler
 
 import (
 	"github.com/FlareZone/melon-backend/internal/ginctx"
+	"github.com/FlareZone/melon-backend/internal/handler/type"
 	"github.com/FlareZone/melon-backend/internal/response"
 	"github.com/FlareZone/melon-backend/internal/service"
 	"github.com/gin-gonic/gin"
@@ -17,12 +18,12 @@ func NewUserHandler(user service.UserService) *UserHandler {
 }
 
 func (u *UserHandler) Info(c *gin.Context) {
-	response.JsonSuccess(c, new(UserInfoResponse).WithUser(ginctx.AuthUser(c)))
+	response.JsonSuccess(c, new(_type.UserInfoResponse).WithUser(ginctx.AuthUser(c)))
 	return
 }
 
 func (u *UserHandler) EditProfile(c *gin.Context) {
-	var params EditUserProfileRequest
+	var params _type.EditUserProfileRequest
 	if err := c.BindJSON(&params); err != nil {
 		response.JsonFail(c, response.BadRequestParams, err.Error())
 		return
@@ -43,8 +44,8 @@ func (u *UserHandler) QueryUserInfo(c *gin.Context) {
 	queryUser := u.user.FindUserByUuid(uuid)
 	follower := u.user.IsFollower(user, queryUser)
 	followed := u.user.IsFollowed(user, queryUser)
-	response.JsonSuccess(c, new(BaseUserDetailResponse).WithBaseInfoResponseUser(
-		new(BaseUserInfoResponse).WithUser(queryUser),
+	response.JsonSuccess(c, new(_type.BaseUserDetailResponse).WithBaseInfoResponseUser(
+		new(_type.BaseUserInfoResponse).WithUser(queryUser),
 		followed, follower))
 }
 
@@ -62,11 +63,11 @@ func (u *UserHandler) Following(c *gin.Context) {
 // QueryFollowedList 查询关注 uuid 的人
 func (u *UserHandler) QueryFollowedList(c *gin.Context) {
 	users := u.user.QueryFollowedUsers(c.Param("uuid"))
-	response.JsonSuccess(c, new(BaseUserInfoResponse).WithUsers(users))
+	response.JsonSuccess(c, new(_type.BaseUserInfoResponse).WithUsers(users))
 }
 
 // QueryFollowerList 查询 uuid 的关注者
 func (u *UserHandler) QueryFollowerList(c *gin.Context) {
 	users := u.user.QueryFollowerUsers(c.Param("uuid"))
-	response.JsonSuccess(c, new(BaseUserInfoResponse).WithUsers(users))
+	response.JsonSuccess(c, new(_type.BaseUserInfoResponse).WithUsers(users))
 }

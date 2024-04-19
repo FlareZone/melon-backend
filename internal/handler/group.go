@@ -3,6 +3,7 @@ package handler
 import (
 	"github.com/FlareZone/melon-backend/internal/components"
 	"github.com/FlareZone/melon-backend/internal/ginctx"
+	"github.com/FlareZone/melon-backend/internal/handler/type"
 	"github.com/FlareZone/melon-backend/internal/model"
 	"github.com/FlareZone/melon-backend/internal/response"
 	"github.com/FlareZone/melon-backend/internal/service"
@@ -29,11 +30,11 @@ func (g *GroupHandler) Groups(c *gin.Context) {
 		return item.Creator, item
 	}))
 	users := g.user.QueryUserMap(creators)
-	response.JsonSuccess(c, new(GroupListResponse).WithGroups(groups, users))
+	response.JsonSuccess(c, new(_type.GroupListResponse).WithGroups(groups, users))
 }
 
 func (g *GroupHandler) Create(c *gin.Context) {
-	var params GroupCreateParams
+	var params _type.GroupCreateParams
 	if err := c.BindJSON(&params); err != nil {
 		response.JsonFail(c, response.BadRequestParams, err.Error())
 		return
@@ -45,17 +46,17 @@ func (g *GroupHandler) Create(c *gin.Context) {
 		return
 	}
 	group = g.group.Create(params.Name, params.Description, ginctx.AuthUserID(c), params.Logo, params.BgLogo, params.IsPrivate)
-	response.JsonSuccess(c, new(GroupResponse).WithGroup(group, new(BaseUserInfoResponse).WithUser(g.user.FindUserByUuid(group.Creator))))
+	response.JsonSuccess(c, new(_type.GroupResponse).WithGroup(group, new(_type.BaseUserInfoResponse).WithUser(g.user.FindUserByUuid(group.Creator))))
 	return
 }
 
 func (g *GroupHandler) Detail(c *gin.Context) {
 	group := ginctx.AuthGroup(c)
-	response.JsonSuccess(c, new(GroupResponse).WithGroup(group, new(BaseUserInfoResponse).WithUser(g.user.FindUserByUuid(group.Creator))))
+	response.JsonSuccess(c, new(_type.GroupResponse).WithGroup(group, new(_type.BaseUserInfoResponse).WithUser(g.user.FindUserByUuid(group.Creator))))
 }
 
 func (g *GroupHandler) AddUser(c *gin.Context) {
-	var groupUserAddParams GroupUserAddParams
+	var groupUserAddParams _type.GroupUserAddParams
 	if err := c.BindJSON(&groupUserAddParams); err != nil {
 		response.JsonFail(c, response.BadRequestParams, err.Error())
 		return

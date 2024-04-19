@@ -10,6 +10,7 @@ import (
 	"github.com/FlareZone/melon-backend/common/uuid"
 	"github.com/FlareZone/melon-backend/config"
 	"github.com/FlareZone/melon-backend/internal/ginctx"
+	"github.com/FlareZone/melon-backend/internal/handler/type"
 	"github.com/FlareZone/melon-backend/internal/model"
 	"github.com/FlareZone/melon-backend/internal/response"
 	"github.com/FlareZone/melon-backend/internal/service"
@@ -43,7 +44,7 @@ func (a *AuthHandler) SimpleOauthHandler(c *gin.Context) {
 	c.SetCookie(consts.JwtCookie, jwtToken, 24*3600, "/", config.App.Domain(), false, true)
 
 	result := map[string]interface{}{
-		"action_type": AuthActionLogin.String(),
+		"action_type": _type.AuthActionLogin.String(),
 		"jwt_token":   jwtToken,
 		"expired_at":  time.Now().Add(time.Hour * 24).UnixMilli(),
 	}
@@ -92,7 +93,7 @@ func (a *AuthHandler) GoogleOauthCallback(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"message": "Failed to get userinfo", "error": err.Error()})
 		return
 	}
-	var actionType = AuthActionLogin.String()
+	var actionType = _type.AuthActionLogin.String()
 	user := a.user.FindUserByEmail(googleOauthInfo.Email)
 	if user.UUID == "" {
 		user = googleOauthInfo.User()
@@ -100,7 +101,7 @@ func (a *AuthHandler) GoogleOauthCallback(c *gin.Context) {
 			c.JSON(http.StatusInternalServerError, gin.H{"message": "Failed to get userinfo"})
 			return
 		}
-		actionType = AuthActionRegister.String()
+		actionType = _type.AuthActionRegister.String()
 	}
 
 	jwtToken, err := jwt.Generate(user.UUID)
@@ -121,7 +122,7 @@ func (a *AuthHandler) GoogleOauthCallback(c *gin.Context) {
 }
 
 func (a *AuthHandler) EthereumEip712Signature(c *gin.Context) {
-	var params EthereumEip712SignatureRequest
+	var params _type.EthereumEip712SignatureRequest
 	if err := c.BindJSON(&params); err != nil {
 		response.JsonFail(c, response.BadRequestParams, err.Error())
 		return
@@ -132,7 +133,7 @@ func (a *AuthHandler) EthereumEip712Signature(c *gin.Context) {
 		return
 	}
 	user := a.user.FindUserByEthAddress(ethAddress)
-	var actionType = AuthActionLogin.String()
+	var actionType = _type.AuthActionLogin.String()
 	if user.UUID == "" {
 		user = &model.User{
 			EthAddress: &ethAddress,
@@ -145,7 +146,7 @@ func (a *AuthHandler) EthereumEip712Signature(c *gin.Context) {
 			c.JSON(http.StatusInternalServerError, gin.H{"message": "Failed to get userinfo"})
 			return
 		}
-		actionType = AuthActionRegister.String()
+		actionType = _type.AuthActionRegister.String()
 	}
 	jwtToken, err := jwt.Generate(user.UUID)
 	if err != nil {
@@ -163,7 +164,7 @@ func (a *AuthHandler) EthereumEip712Signature(c *gin.Context) {
 }
 
 func (a *AuthHandler) EthereumEip712SignatureNonce(c *gin.Context) {
-	var params EthereumEip712SignatureNonceRequest
+	var params _type.EthereumEip712SignatureNonceRequest
 	if err := c.BindJSON(&params); err != nil {
 		response.JsonFail(c, response.BadRequestParams, err.Error())
 		return
@@ -184,7 +185,7 @@ func (a *AuthHandler) EthereumEip712SignatureNonce(c *gin.Context) {
 }
 
 func (a *AuthHandler) SendVerificationCode(c *gin.Context) {
-	var params EmailVerificationCodeRequest
+	var params _type.EmailVerificationCodeRequest
 	if err := c.BindJSON(&params); err != nil {
 		response.JsonFail(c, response.BadRequestParams, err.Error())
 		return
@@ -195,7 +196,7 @@ func (a *AuthHandler) SendVerificationCode(c *gin.Context) {
 
 // LoginWithEmail 如果没有注册，则注册
 func (a *AuthHandler) LoginWithEmail(c *gin.Context) {
-	var params EmailLoginRequest
+	var params _type.EmailLoginRequest
 	if err := c.BindJSON(&params); err != nil {
 		response.JsonFail(c, response.BadRequestParams, err.Error())
 		return
@@ -205,7 +206,7 @@ func (a *AuthHandler) LoginWithEmail(c *gin.Context) {
 		return
 	}
 
-	var actionType = AuthActionLogin.String()
+	var actionType = _type.AuthActionLogin.String()
 	user := a.user.FindUserByEmail(params.Email)
 	if user.UUID == "" {
 		emailVerify := true
@@ -222,7 +223,7 @@ func (a *AuthHandler) LoginWithEmail(c *gin.Context) {
 			response.JsonFail(c, response.StatusInternalServerError, "register fail")
 			return
 		}
-		actionType = AuthActionRegister.String()
+		actionType = _type.AuthActionRegister.String()
 	}
 
 	jwtToken, err := jwt.Generate(user.UUID)
