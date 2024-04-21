@@ -15,4 +15,5 @@ func Point(r *gin.RouterGroup) {
 	r.DELETE("/:user_id", middleware.Jwt(), pointHandler.DeletePoints)
 	r.GET("/:user_id", pointHandler.GetUserPoints)
 	r.GET("/leaderboard", pointHandler.GetUserLeaderboard)
+	r.POST("/exchange_points", middleware.Jwt(), pointHandler.ExchangePoints)
 }

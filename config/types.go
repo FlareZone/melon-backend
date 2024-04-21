@@ -57,3 +57,9 @@ type googleMail struct {
 	Password string `json:"json"`
 	Sender   string `json:"sender"`
 }
+
+type smartContract struct {
+	ProposalLogicContractAddress string
+	FlareTokenContractAddress    string
+	Jsonrpc                      string
+}
