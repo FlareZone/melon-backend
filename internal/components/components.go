@@ -3,9 +3,11 @@ package components
 import (
 	"context"
 	"fmt"
+	"github.com/FlareZone/melon-backend/common/migrate"
 	"github.com/FlareZone/melon-backend/config"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/redis/go-redis/v9"
+	"github.com/spf13/viper"
 	"xorm.io/xorm"
 )
 
@@ -15,6 +17,8 @@ var (
 )
 
 func initMysql() {
+	fmt.Println("初始化Mysql")
+	migrate.Schema(viper.GetString("database.melon.dsn"))
 	// init DBEngine
 	engine, err := xorm.NewEngine("mysql", config.MelonDB.DSN)
 	if err != nil {

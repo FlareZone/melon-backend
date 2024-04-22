@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"github.com/FlareZone/melon-backend/common/logger"
-	"github.com/FlareZone/melon-backend/common/migrate"
 	"github.com/inconshreveable/log15"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -39,7 +38,7 @@ func initConfig() {
 		log.Error("viper read in config failed", "err", err)
 		os.Exit(1)
 	}
-	migrate.Schema(viper.GetString("database.melon.dsn"))
+	//migrate.Schema(viper.GetString("database.melon.dsn"))
 }
 
 func Execute() {
