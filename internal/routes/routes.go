@@ -32,7 +32,7 @@ func NoLoginJwt(r *gin.Engine) {
 
 func Route(r *gin.Engine) {
 
-	Web(r)
+	//Web(r)
 	r.Use(middleware.Cors())
 	authGroup := r.Group("/auth")
 	{
