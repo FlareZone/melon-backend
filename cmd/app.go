@@ -32,8 +32,7 @@ func initConfig() {
 	if cfgFile != "" {
 		viper.SetConfigFile(cfgFile)
 	} else {
-		//viper.SetConfigFile("/etc/melon/config.yaml")
-		viper.SetConfigFile("./../config.yaml")
+		viper.SetConfigFile("/etc/melon/config.yaml")
 	}
 	log15.Root().SetHandler(logger.InitLogHandle(log15.Root().GetHandler()))
 	if err := viper.ReadInConfig(); err != nil {

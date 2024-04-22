@@ -43,6 +43,7 @@ func NewProposalLogicContract(privateKey string) *ProposalLogicContract {
 	return proposalLogicContract
 }
 
+// 兑换积分
 func (proposalLogicContract ProposalLogicContract) ExchangePoints(points uint64) bool {
 	tx, txErr := proposalLogicContract.Instance.Txn("exchangePoints", big.NewInt(int64(points)))
 	if txErr != nil {
@@ -63,6 +64,7 @@ func (proposalLogicContract ProposalLogicContract) ExchangePoints(points uint64)
 	return true
 }
 
+// 查询账户余额
 func (proposalLogicContract ProposalLogicContract) balances(publicKey string) *big.Int {
 	balance, err := proposalLogicContract.Instance.Call("balances", ethgo.Latest, ethgo.HexToAddress(publicKey))
 	if err != nil {
