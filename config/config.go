@@ -19,18 +19,10 @@ var (
 )
 
 func InitConfig() {
-
-	//GoogleOauthCfg = &oauth2.Config{
-	//	ClientID:     viper.GetString("oauth_v2.google.client_id"),
-	//	ClientSecret: viper.GetString("oauth_v2.google.client_secret"),
-	//	RedirectURL:  viper.GetString("oauth_v2.google.redirect_url"),
-	//	Scopes:       []string{"email", "profile"},
-	//	Endpoint:     google.Endpoint,
-	//}
 	GoogleOauthCfg = &oauth2.Config{
-		ClientID:     "1030441591409-i0eiesff2uj64mhe3bl66338ofcv8sar.apps.googleusercontent.com",
-		ClientSecret: "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",
-		RedirectURL:  "https://6d8d99dc.r12.cpolar.top/auth/google/callback",
+		ClientID:     viper.GetString("oauth_v2.google.client_id"),
+		ClientSecret: viper.GetString("oauth_v2.google.client_secret"),
+		RedirectURL:  viper.GetString("oauth_v2.google.redirect_url"),
 		Scopes:       []string{"email", "profile"},
 		Endpoint:     google.Endpoint,
 	}

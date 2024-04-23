@@ -1,0 +1,41 @@
+app_name: melon
+app_url: http://localhost:8080
+log_level: INFO
+database:
+  melon:
+    logging: true
+    dsn: root:12345678@tcp(localhost:3306)/melon-dev?parseTime=true
+redis:
+  melon:
+    addr: localhost:6379
+    password:
+    DB: 0
+jwt:
+  secret: f7&vh@VHuU0XpXZLm6wT2*HlYpPG#j0G3Tzsi!Qwsk#fY9+gF43g8Eu
+  issuer: melon
+oauth_v2:
+  google:
+    client_id: 1030441591409-i0eiesff2uj64mhe3bl66338ofcv8sar.apps.googleusercontent.com
+    client_secret: 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
+    redirect_url: http://localhost:8080/auth/google/callback
+eip712:
+  chain_id: 1
+  version: 1
+  name: melon
+  verifying_Contract: 0xdAC17F958D2ee523a2206206994597C13D831ec7
+oss:
+  aliyun:
+    endpoint: oss-cn-beijing.aliyuncs.com
+    accessKeyId: LTAI5t9bPq1vCoj2qyUX1K1a
+    accessKeySecret: FZn0FPC1PAeGlEnUFmJF0hXaPya7IX
+    bucketName: melon-save-test
+    selfDomain:
+mail:
+  google:
+    password: xqnt yoyn viit pvcp
+    sender: lantianlaoli@gmail.com
+smart_contract:
+  proposal_logic_contract_address: 0xd92B00D9D2Fc3e51828672bfA6D77D43DF35191c
+  flare_token_contract_address: 0x65F92002b645Be9d582BBd1D5FC9C7A51AAC9bCF
+  jsonrpc: https://eth-sepolia.g.alchemy.com/v2/hCl9ueHpm7dG-w_fK-TMw6xK2JFR8SxH
+
