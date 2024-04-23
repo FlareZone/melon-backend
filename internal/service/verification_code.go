@@ -57,10 +57,15 @@ func (v *VerificationCode) VerifyEmailCode(to string, code string) bool {
 	return strings.EqualFold(result, code)
 }
 
+// This function is used to send a login verification code to the user's email address.
 func (v *VerificationCode) SendLoginVerificationCode(to string) {
+	// Generate a verification code
 	code := v.generateCode()
+	// Create a key for the email login
 	mailLoginKey := rdbkey.MailLogin(to)
+	// Lock the email login key for 1 minute
 	lock, err := v.locker.Obtain(context.Background(), rdbkey.MailLoginLock(), time.Minute, nil)
+	// If the lock is not obtained, log an error
 	if err == redislock.ErrNotObtained {
 		log.Error("get mail login locker fail", "mailto", to, "err", err)
 		return
@@ -68,12 +73,16 @@ func (v *VerificationCode) SendLoginVerificationCode(to string) {
 		log.Error("get mail login locker occur a error", "mailto", to, "err", err)
 		return
 	}
+	// Release the lock
 	defer lock.Release(context.Background())
+	// Set the verification code to the Redis database
 	err = v.Redis.Set(context.Background(), mailLoginKey, code, 5*time.Minute).Err()
+	// If the set operation fails, log an error
 	if err != nil {
 		log.Error("Set code to redis fail", "key", mailLoginKey, "verification_code", code, "err", err)
 		return
 	}
+	// Send the verification code to the email channel
 	emailChannel <- &VerificationMail{To: to, Code: code, ExpiredMinute: 5}
 }
 
