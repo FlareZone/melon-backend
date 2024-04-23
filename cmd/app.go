@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"github.com/FlareZone/melon-backend/common/logger"
-	"github.com/FlareZone/melon-backend/common/migrate"
 	"github.com/inconshreveable/log15"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -32,15 +31,14 @@ func initConfig() {
 	if cfgFile != "" {
 		viper.SetConfigFile(cfgFile)
 	} else {
-		//viper.SetConfigFile("/etc/melon/config.yaml")
-		viper.SetConfigFile("./../config.yaml")
+		viper.SetConfigFile("/etc/melon/config.yaml")
 	}
 	log15.Root().SetHandler(logger.InitLogHandle(log15.Root().GetHandler()))
 	if err := viper.ReadInConfig(); err != nil {
 		log.Error("viper read in config failed", "err", err)
 		os.Exit(1)
 	}
-	migrate.Schema(viper.GetString("database.melon.dsn"))
+	//migrate.Schema(viper.GetString("database.melon.dsn"))
 }
 
 func Execute() {

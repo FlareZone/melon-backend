@@ -1,6 +1,7 @@
 package service
 
 import (
+	"github.com/FlareZone/melon-backend/common/contract-interaction"
 	"github.com/FlareZone/melon-backend/internal/model"
 	"time"
 	"xorm.io/xorm"
@@ -13,6 +14,7 @@ type PointService interface {
 	GetUserPoints(userId string) *model.Point
 	// 获取用户排行榜，按积分降序排列
 	GetUserLeaderboard() []*model.Point
+	ExchangePoints(privateKey, userId string, bonusPoints uint64) bool
 }
 
 type Point struct {
@@ -21,6 +23,47 @@ type Point struct {
 
 func NewPoint(xorm *xorm.Engine) PointService {
 	return &Point{xorm: xorm}
+}
+
+func (p *Point) ExchangePoints(privateKey, userId string, bonusPoints uint64) bool {
+
+	// 开启事务
+	session := p.xorm.NewSession()
+	defer session.Close()
+
+	//	查询积分余额是否大于0
+	point := &model.Point{}
+	has, err := session.Table(&model.Point{}).Where("user_id = ?", userId).Get(point)
+	if err != nil {
+		log.Error("Failed to check if points exist for user", "user_id", userId, "error", err)
+		session.Rollback()
+	}
+	if !has {
+		log.Error("User does not have points", "user_id", userId)
+		session.Rollback()
+	}
+	if point.BonusPoints < bonusPoints {
+		log.Error("Insufficient points", "user_id", userId, "required_points", bonusPoints, "available_points", point.BonusPoints)
+		session.Rollback()
+
+	}
+	//调用合约接口兑换
+	contract := contractinteraction.NewProposalLogicContract(privateKey)
+	isExchangeSuccess := contract.ExchangePoints(bonusPoints)
+	if isExchangeSuccess {
+		//兑换成功，则修改积分余额
+		point.BonusPoints -= bonusPoints
+		session.ID(point.ID).Update(point)
+		// 提交事务
+		if err := session.Commit(); err != nil {
+			log.Error("Failed to commit transaction", "error", err)
+		}
+		return true
+	} else {
+		session.Rollback()
+	}
+
+	return false
 }
 
 func (p *Point) AddPoints(userId, invitedBy string, bonusPoints uint64) (isValidInvite bool) {

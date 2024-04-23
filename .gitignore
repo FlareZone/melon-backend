@@ -22,5 +22,4 @@ go.work
 .idea
 .idea/*
 config.yaml
-config.yaml
 db

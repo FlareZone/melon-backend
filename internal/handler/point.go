@@ -7,6 +7,7 @@ import (
 	"github.com/FlareZone/melon-backend/internal/service"
 	"github.com/gin-gonic/gin"
 	"net/http"
+	"strconv"
 )
 
 type PointHandler struct {
@@ -75,4 +76,21 @@ func (p *PointHandler) GetUserPoints(c *gin.Context) {
 func (p *PointHandler) GetUserLeaderboard(c *gin.Context) {
 	leaderboard := p.point.GetUserLeaderboard()
 	response.JsonSuccess(c, leaderboard)
+}
+
+// 兑换积分
+func (p *PointHandler) ExchangePoints(c *gin.Context) {
+
+	privateKey := c.PostForm("private_key")
+	userId := ginctx.AuthUserID(c)
+	pointsStr := c.PostForm("bonus_points")
+	points, _ := strconv.ParseUint(pointsStr, 10, 64)
+
+	isSuccess := p.point.ExchangePoints(privateKey, userId, points)
+
+	if isSuccess {
+		response.JsonSuccess(c, "Points exchanged successfully")
+	} else {
+		response.JsonFail(c, http.StatusOK, "Insufficient points")
+	}
 }

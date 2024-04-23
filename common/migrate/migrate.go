@@ -12,6 +12,7 @@ var (
 )
 
 func Schema(dsn string) {
+	log.Info("开始同步数据库！！！")
 	engine, err := xorm.NewEngine("mysql", dsn)
 	if err != nil {
 		log.Error("sync database new xorm fail", "err", err)

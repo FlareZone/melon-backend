@@ -37,7 +37,7 @@ func init() {
 
 /**
  * accounts[0] 部署了 mln token: 0x87A31aDa5ffDa118D83543CEF9EDCCf9806a0f5f
- * accounts[1] 部署了 bet contract: 0xBD8392F1a5A2b05612a25d73073306E3E1825551
+ * accounts[1] 部署了 bet contract-interaction: 0xBD8392F1a5A2b05612a25d73073306E3E1825551
  *
  * 1. 签名：accounts[0] permit 100 mln 代币给到 accounts[3]
  * 2. relayer: accounts[4] 拿着签名上链

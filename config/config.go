@@ -15,6 +15,7 @@ var (
 	AliyunOSS      *aliyunOssConfig
 	RedisCfg       *redisConfig
 	GoogleMail     *googleMail
+	SmartContract  *smartContract
 )
 
 func InitConfig() {
@@ -67,4 +68,10 @@ func InitConfig() {
 		Password: viper.GetString("mail.google.password"),
 		Sender:   viper.GetString("mail.google.sender"),
 	}
+	SmartContract = &smartContract{
+		ProposalLogicContractAddress: viper.GetString("smart_contract.proposal_logic_contract_address"),
+		FlareTokenContractAddress:    viper.GetString("smart_contract.flare_token_contract_address"),
+		Jsonrpc:                      viper.GetString("smart_contract.jsonrpc"),
+	}
+
 }
