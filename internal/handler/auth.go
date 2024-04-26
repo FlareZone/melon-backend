@@ -58,8 +58,8 @@ func (a *AuthHandler) GoogleOauthCallback(c *gin.Context) {
 
 	code := c.Query("code")
 
-	log.Info("授权码", code)
-	//使用授权码换取token
+	log.Info("Authorization grant", "Authorization grant:", code)
+	//Use authorization code to exchange for token
 	token, err := config.GoogleOauthCfg.Exchange(c, code)
 
 	if err != nil {
