@@ -28,7 +28,7 @@ eth_address: 0xcBea7440fB18e72578c34AFA885f9Cc16be2f3d5
 ## 本地测试
 启动命令`go run main.go api -e dev`
 
-配置文件config.yaml示例
+配置文件config.dev.yaml示例
 ```yaml
 app_name: melon
 app_url: http://localhost:8080
